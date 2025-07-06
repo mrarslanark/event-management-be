@@ -1,0 +1,17 @@
+@EventManagement_HostAddress = http://localhost:5009
+
+### Get All Events
+GET {{EventManagement_HostAddress}}/events
+Accept: application/json
+
+### Create a new Event
+POST {{EventManagement_HostAddress}}/events
+Content-Type: application/json
+
+{
+  "name": "AI Conference",
+  "description": "This is an AI conference ensuring countries to adapt towards digitalization.",
+  "location": "San Francisco",
+  "pricePerPerson": 225.36,
+  "date": "2025-08-22T10:00:00Z"
+}
