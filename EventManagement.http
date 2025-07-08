@@ -9,11 +9,11 @@ POST {{EventManagement_HostAddress}}/events
 Content-Type: application/json
 
 {
-  "name": "AI Conference",
-  "description": "This is an AI conference ensuring countries to adapt towards digitalization.",
-  "location": "San Francisco",
-  "pricePerPerson": 225.36,
-  "date": "2025-08-22T10:00:00Z"
+  "name": "Building AI Apps with a Roadmap",
+  "description": "",
+  "location": "Detriot, Texas",
+  "pricePerPerson": 189.65,
+  "date": "2025-12-20T09:00:00Z"
 }
 
 ### Update an Event
@@ -21,7 +21,7 @@ PUT {{EventManagement_HostAddress}}/events/ec0d50d6-24af-431b-bfd0-b7bb6e961bc7
 Content-Type: application/json
 
 {
-  "name": "Updated Developer Conf",
+  "name": "AI Developer Conf",
   "location": "Los Angeles",
   "date": "2025-09-01T10:00:00Z",
   "pricePerPerson": 349.99

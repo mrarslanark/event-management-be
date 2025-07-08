@@ -2,9 +2,17 @@ using EventManagement.Data;
 using EventManagement.Routes;
 using Microsoft.EntityFrameworkCore;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var dbUser = Environment.GetEnvironmentVariable("DB_USER");
+var dbPass = Environment.GetEnvironmentVariable("DB_PASS");
+var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
+var dbPort = Environment.GetEnvironmentVariable("DB_PORT");
+var dbName = Environment.GetEnvironmentVariable("DB_NAME");
+
+var connectionString = $"server={dbHost};port={dbPort};database={dbName};user={dbUser};password={dbPass};";
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
