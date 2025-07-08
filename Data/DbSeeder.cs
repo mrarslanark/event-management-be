@@ -13,7 +13,7 @@ public static class DbSeeder
                 Name = "Tech Expo",
                 Location = "Dubai",
                 Date = DateTime.UtcNow.AddMonths(1),
-                PricePerPerson = 199.99M,
+                PricePerPerson = 199.99F,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
@@ -22,7 +22,7 @@ public static class DbSeeder
                 Name = "Startup Summit",
                 Location = "Berlin",
                 Date = DateTime.UtcNow.AddMonths(2),
-                PricePerPerson = 149.99M,
+                PricePerPerson = 149.99F,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             }

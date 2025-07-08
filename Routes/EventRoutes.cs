@@ -43,6 +43,22 @@ public static class EventRoutes
 
             await db.SaveChangesAsync();
             return Results.Ok(existingEvent);
-        });
+        }).WithName("PutEvent");
+        
+        app.MapDelete("/events/{id:guid}", async (Guid id, AppDbContext db) =>
+        {
+            var existingEvent = await db.Events.FindAsync(id);
+            if (existingEvent is null)
+            {
+                return Results.NotFound(new { message = $"Event with ID {id} not found." });
+            }
+
+            var eventName = existingEvent.Name;
+
+            db.Events.Remove(existingEvent);
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new { message = $"The {eventName} was deleted." });
+        }).WithName("DeleteEvent");
     }
 }

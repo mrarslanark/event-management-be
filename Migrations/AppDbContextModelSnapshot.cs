@@ -46,8 +46,8 @@ namespace EventManagement.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<decimal>("PricePerPerson")
-                        .HasColumnType("decimal(65,30)");
+                    b.Property<float>("PricePerPerson")
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");

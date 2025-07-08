@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250708132030_InitialCreate")]
+    [Migration("20250708192717_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -49,8 +49,8 @@ namespace EventManagement.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<decimal>("PricePerPerson")
-                        .HasColumnType("decimal(65,30)");
+                    b.Property<float>("PricePerPerson")
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");

@@ -24,5 +24,8 @@ Content-Type: application/json
   "name": "AI Developer Conf",
   "location": "Los Angeles",
   "date": "2025-09-01T10:00:00Z",
-  "pricePerPerson": 349.99
+  "pricePerPerson": 125.65
 }
+
+### Delete an Event
+DELETE {{EventManagement_HostAddress}}/events/0cbe2d2b-2bcf-4c83-8577-1bc90adff569
