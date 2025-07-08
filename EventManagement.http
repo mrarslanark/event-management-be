@@ -1,11 +1,12 @@
 @EventManagement_HostAddress = http://localhost:5009
+@Events_Endpoint = events
 
 ### Get All Events
-GET {{EventManagement_HostAddress}}/events
+GET {{EventManagement_HostAddress}}/{{Events_Endpoint}}
 Accept: application/json
 
 ### Create a new Event
-POST {{EventManagement_HostAddress}}/events
+POST {{EventManagement_HostAddress}}/{{Events_Endpoint}}
 Content-Type: application/json
 
 {
@@ -17,7 +18,7 @@ Content-Type: application/json
 }
 
 ### Update an Event
-PUT {{EventManagement_HostAddress}}/events/ec0d50d6-24af-431b-bfd0-b7bb6e961bc7
+PUT {{EventManagement_HostAddress}}/{{Events_Endpoint}}/ec0d50d6-24af-431b-bfd0-b7bb6e961bc7
 Content-Type: application/json
 
 {
@@ -28,4 +29,7 @@ Content-Type: application/json
 }
 
 ### Delete an Event
-DELETE {{EventManagement_HostAddress}}/events/0cbe2d2b-2bcf-4c83-8577-1bc90adff569
+DELETE {{EventManagement_HostAddress}}/{{Events_Endpoint}}/0cbe2d2b-2bcf-4c83-8577-1bc90adff569
+
+### Delete all events
+DELETE {{EventManagement_HostAddress}}/{{Events_Endpoint}}

@@ -60,5 +60,19 @@ public static class EventRoutes
 
             return Results.Ok(new { message = $"The {eventName} was deleted." });
         }).WithName("DeleteEvent");
+        
+        app.MapDelete("/events", async (AppDbContext db) =>
+        {
+            var events = await db.Events.ToListAsync();
+            if (events.Count == 0)
+            {
+                return Results.NotFound(new { message = "No events found" });
+            }
+            
+            db.Events.RemoveRange(events);
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new { message = $"All {events.Count} events have been deleted." });
+        }).WithName("DeleteEvents");
     }
 }
