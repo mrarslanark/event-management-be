@@ -1,37 +1,48 @@
+using EventManagement.Data;
 using EventManagement.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventManagement.Routes;
 
 public static class EventRoutes
 {
-    private static readonly List<Event> Events =
-    [
-        new()
-        {
-            Name = "Tech Summit", Location = "Dubai", Date = DateTime.UtcNow.AddMonths(1), PricePerPerson = 199.99M,
-            Description = "Description"
-        },
-
-        new()
-        {
-            
-            Name = "Startup Expo", Location = "Berlin", Date = DateTime.UtcNow.AddMonths(2), PricePerPerson = 149.99M,
-            Description = "Description"
-        }
-    ];
-
     public static void MapEventEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/events", () => Results.Ok(Events)).WithName("GetEvents");
+        app.MapGet("/events", async (AppDbContext db) =>
+        {
+            var events = await db.Events.ToListAsync();
+            return Results.Ok(events);
+        }).WithName("GetEvents");
 
-        app.MapPost("/events", (Event newEvent) =>
+        app.MapPost("/events", async (AppDbContext db, Event newEvent) =>
             {
                 newEvent.Id = Guid.NewGuid();
                 newEvent.CreatedAt = DateTime.UtcNow;
                 newEvent.UpdatedAt = DateTime.UtcNow;
-                Events.Add(newEvent);
+
+                db.Events.Add(newEvent);
+                await db.SaveChangesAsync();
+                
                 return Results.Created($"/events/{newEvent.Id}", newEvent);
             })
             .WithName("PostEvent");
+
+        app.MapPut("/events/{id:guid}", async (Guid id, Event updatedEvent, AppDbContext db) =>
+        {
+            var existingEvent = await db.Events.FindAsync(id);
+            if (existingEvent is null)
+            {
+                return Results.NotFound(new { message = $"Event with ID {id} not found." });
+            }
+            
+            existingEvent.Name = updatedEvent.Name;
+            existingEvent.Description = updatedEvent.Description;
+            existingEvent.Date = updatedEvent.Date;
+            existingEvent.PricePerPerson = updatedEvent.PricePerPerson;
+            existingEvent.UpdatedAt = DateTime.UtcNow;
+
+            await db.SaveChangesAsync();
+            return Results.Ok(existingEvent);
+        });
     }
 }

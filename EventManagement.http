@@ -15,3 +15,14 @@ Content-Type: application/json
   "pricePerPerson": 225.36,
   "date": "2025-08-22T10:00:00Z"
 }
+
+### Update an Event
+PUT {{EventManagement_HostAddress}}/events/ec0d50d6-24af-431b-bfd0-b7bb6e961bc7
+Content-Type: application/json
+
+{
+  "name": "Updated Developer Conf",
+  "location": "Los Angeles",
+  "date": "2025-09-01T10:00:00Z",
+  "pricePerPerson": 349.99
+}
