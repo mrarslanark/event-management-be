@@ -1,9 +1,10 @@
 @EventManagement_HostAddress = http://localhost:5009
 @Events_Endpoint = events
+@Token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTIwMjMyOTksImlzcyI6IkV2ZW50QVBJIiwiYXVkIjoiRXZlbnRBUElDbGllbnQifQ.cCmj0JtzVbQJdAJ8_kzJPgMPc1Tp7lg2CRVJoGuYXYs
 
 ### Get All Events
 GET {{EventManagement_HostAddress}}/{{Events_Endpoint}}
-Accept: application/json
+Authorization: Bearer {{Token}}
 
 ### Create a new Event
 POST {{EventManagement_HostAddress}}/{{Events_Endpoint}}
@@ -33,3 +34,12 @@ DELETE {{EventManagement_HostAddress}}/{{Events_Endpoint}}/0cbe2d2b-2bcf-4c83-85
 
 ### Delete all events
 DELETE {{EventManagement_HostAddress}}/{{Events_Endpoint}}
+
+### Login
+POST {{EventManagement_HostAddress}}/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}

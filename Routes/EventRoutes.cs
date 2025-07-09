@@ -9,10 +9,12 @@ public static class EventRoutes
     public static void MapEventEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/events", async (AppDbContext db) =>
-        {
-            var events = await db.Events.ToListAsync();
-            return Results.Ok(events);
-        }).WithName("GetEvents");
+            {
+                var events = await db.Events.ToListAsync();
+                return Results.Ok(events);
+            })
+            .RequireAuthorization()
+            .WithName("GetEvents");
 
         app.MapPost("/events", async (AppDbContext db, Event newEvent) =>
             {
@@ -22,7 +24,7 @@ public static class EventRoutes
 
                 db.Events.Add(newEvent);
                 await db.SaveChangesAsync();
-                
+
                 return Results.Created($"/events/{newEvent.Id}", newEvent);
             })
             .WithName("PostEvent");
@@ -34,7 +36,7 @@ public static class EventRoutes
             {
                 return Results.NotFound(new { message = $"Event with ID {id} not found." });
             }
-            
+
             existingEvent.Name = updatedEvent.Name;
             existingEvent.Description = updatedEvent.Description;
             existingEvent.Date = updatedEvent.Date;
@@ -44,7 +46,7 @@ public static class EventRoutes
             await db.SaveChangesAsync();
             return Results.Ok(existingEvent);
         }).WithName("PutEvent");
-        
+
         app.MapDelete("/events/{id:guid}", async (Guid id, AppDbContext db) =>
         {
             var existingEvent = await db.Events.FindAsync(id);
@@ -60,7 +62,7 @@ public static class EventRoutes
 
             return Results.Ok(new { message = $"The {eventName} was deleted." });
         }).WithName("DeleteEvent");
-        
+
         app.MapDelete("/events", async (AppDbContext db) =>
         {
             var events = await db.Events.ToListAsync();
@@ -68,7 +70,7 @@ public static class EventRoutes
             {
                 return Results.NotFound(new { message = "No events found" });
             }
-            
+
             db.Events.RemoveRange(events);
             await db.SaveChangesAsync();
 
