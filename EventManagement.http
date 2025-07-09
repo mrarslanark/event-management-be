@@ -43,3 +43,12 @@ Content-Type: application/json
   "username": "admin",
   "password": "password"
 }
+
+### Register a New User
+POST {{EventManagement_HostAddress}}/register
+Content-Type: application/json
+
+{
+  "username": "arslan",
+  "password": "SuperSecure123"
+}
