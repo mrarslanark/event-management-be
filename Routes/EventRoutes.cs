@@ -47,33 +47,35 @@ public static class EventRoutes
         }).WithName("PutEvent");
 
         app.MapDelete("/events/{id:guid}", async (Guid id, AppDbContext db) =>
-        {
-            var existingEvent = await db.Events.FindAsync(id);
-            if (existingEvent is null)
             {
-                return Results.NotFound(new { message = $"Event with ID {id} not found." });
-            }
+                var existingEvent = await db.Events.FindAsync(id);
+                if (existingEvent is null)
+                {
+                    return Results.NotFound(new { message = $"Event with ID {id} not found." });
+                }
 
-            var eventName = existingEvent.Name;
+                var eventName = existingEvent.Name;
 
-            db.Events.Remove(existingEvent);
-            await db.SaveChangesAsync();
+                db.Events.Remove(existingEvent);
+                await db.SaveChangesAsync();
 
-            return Results.Ok(new { message = $"The {eventName} was deleted." });
-        }).WithName("DeleteEvent");
+                return Results.Ok(new { message = $"The {eventName} was deleted." });
+            })
+            .WithName("DeleteEvent");
 
         app.MapDelete("/events", async (AppDbContext db) =>
-        {
-            var events = await db.Events.ToListAsync();
-            if (events.Count == 0)
             {
-                return Results.NotFound(new { message = "No events found" });
-            }
+                var events = await db.Events.ToListAsync();
+                if (events.Count == 0)
+                {
+                    return Results.NotFound(new { message = "No events found" });
+                }
 
-            db.Events.RemoveRange(events);
-            await db.SaveChangesAsync();
+                db.Events.RemoveRange(events);
+                await db.SaveChangesAsync();
 
-            return Results.Ok(new { message = $"All {events.Count} events have been deleted." });
-        }).WithName("DeleteEvents");
+                return Results.Ok(new { message = $"All {events.Count} events have been deleted." });
+            })
+            .WithName("DeleteEvents");
     }
 }
