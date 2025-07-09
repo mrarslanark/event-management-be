@@ -13,7 +13,6 @@ public static class EventRoutes
                 var events = await db.Events.ToListAsync();
                 return Results.Ok(events);
             })
-            .RequireAuthorization()
             .WithName("GetEvents");
 
         app.MapPost("/events", async (AppDbContext db, Event newEvent) =>
