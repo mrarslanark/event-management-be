@@ -26,25 +26,28 @@ public static class EventRoutes
 
                 return Results.Created($"/events/{newEvent.Id}", newEvent);
             })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Manager"))
             .WithName("PostEvent");
 
         app.MapPut("/events/{id:guid}", async (Guid id, Event updatedEvent, AppDbContext db) =>
-        {
-            var existingEvent = await db.Events.FindAsync(id);
-            if (existingEvent is null)
             {
-                return Results.NotFound(new { message = $"Event with ID {id} not found." });
-            }
+                var existingEvent = await db.Events.FindAsync(id);
+                if (existingEvent is null)
+                {
+                    return Results.NotFound(new { message = $"Event with ID {id} not found." });
+                }
 
-            existingEvent.Name = updatedEvent.Name;
-            existingEvent.Description = updatedEvent.Description;
-            existingEvent.Date = updatedEvent.Date;
-            existingEvent.PricePerPerson = updatedEvent.PricePerPerson;
-            existingEvent.UpdatedAt = DateTime.UtcNow;
+                existingEvent.Name = updatedEvent.Name;
+                existingEvent.Description = updatedEvent.Description;
+                existingEvent.Date = updatedEvent.Date;
+                existingEvent.PricePerPerson = updatedEvent.PricePerPerson;
+                existingEvent.UpdatedAt = DateTime.UtcNow;
 
-            await db.SaveChangesAsync();
-            return Results.Ok(existingEvent);
-        }).WithName("PutEvent");
+                await db.SaveChangesAsync();
+                return Results.Ok(existingEvent);
+            })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Manager"))
+            .WithName("PutEvent");
 
         app.MapDelete("/events/{id:guid}", async (Guid id, AppDbContext db) =>
             {
@@ -61,6 +64,7 @@ public static class EventRoutes
 
                 return Results.Ok(new { message = $"The {eventName} was deleted." });
             })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Manager"))
             .WithName("DeleteEvent");
 
         app.MapDelete("/events", async (AppDbContext db) =>
@@ -76,6 +80,7 @@ public static class EventRoutes
 
                 return Results.Ok(new { message = $"All {events.Count} events have been deleted." });
             })
+            .RequireAuthorization(policy => policy.RequireRole("Admin"))
             .WithName("DeleteEvents");
     }
 }

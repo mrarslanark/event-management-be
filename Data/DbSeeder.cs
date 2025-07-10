@@ -1,33 +1,22 @@
 using EventManagement.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventManagement.Data;
 
 public static class DbSeeder
 {
-    public static void Seed(AppDbContext db)
+    public static async Task Seed(AppDbContext db)
     {
-        if (db.Events.Any()) return;
-        db.Events.AddRange(
-            new Event
-            {
-                Name = "Tech Expo",
-                Location = "Dubai",
-                Date = DateTime.UtcNow.AddMonths(1),
-                PricePerPerson = 199.99F,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new Event
-            {
-                Name = "Startup Summit",
-                Location = "Berlin",
-                Date = DateTime.UtcNow.AddMonths(2),
-                PricePerPerson = 149.99F,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            }
-        );
+        var roles = new[] { "Admin", "Manager", "User" };
 
-        db.SaveChanges();
+        foreach (var roleName in roles)
+        {
+            if (!await db.Roles.AnyAsync(r => r.Name == roleName))
+            {
+                db.Roles.Add(new Role() { Name = roleName });
+            }
+        }
+
+        await db.SaveChangesAsync();
     }
 }
