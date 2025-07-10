@@ -31,7 +31,7 @@ public static class AuthRoutes
                 
                 var roles =  await GetRoles(db, user.Id.ToString());
 
-                var tokenString = await GenerateToken(user.Id.ToString(), user.Email, roles);
+                var tokenString = GenerateToken(user.Id.ToString(), user.Email, roles);
                 return Results.Ok(new
                 {
                     token = tokenString,
@@ -78,7 +78,7 @@ public static class AuthRoutes
 
             var roles = await GetRoles(db, user.Id.ToString());
 
-            var tokenString = await GenerateToken(user.Id.ToString(), user.Email, roles);
+            var tokenString = GenerateToken(user.Id.ToString(), user.Email, roles);
 
             return Results.Created($"/users/{user.Id}", new
             {
@@ -105,7 +105,7 @@ public static class AuthRoutes
         return System.Net.Mail.MailAddress.TryCreate(email, out _);
     }
 
-    private static async Task<string?> GenerateToken(string userId, string email, List<string> roles)
+    public static string? GenerateToken(string userId, string email, List<string> roles)
     {
         var authKey = Environment.GetEnvironmentVariable("AUTH_KEY");
         var issuer = Environment.GetEnvironmentVariable("AUTH_ISSUER");

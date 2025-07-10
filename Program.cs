@@ -62,8 +62,9 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
     db.Database.Migrate();
-    await DbSeeder.Seed(db);
+    await DbSeeder.Seed(db, hasher);
 }
 
 // Configure the HTTP request pipeline.
@@ -76,5 +77,7 @@ app.UseAuthorization();
 // Routes
 app.MapAuthEndpoints();
 app.MapEventEndpoints();
+app.MapKycEndpoints();
+app.MapUserRoutes();
 
 app.Run();
