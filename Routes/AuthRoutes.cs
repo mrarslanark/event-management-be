@@ -18,9 +18,7 @@ public static class AuthRoutes
             {
                 var isEmailValid = VerifyEmailAddress(request.Email);
                 if (!isEmailValid)
-                {
                     return Results.BadRequest(new { message = "Invalid Email Address" });
-                }
 
                 // Find user from database
                 var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
@@ -47,21 +45,15 @@ public static class AuthRoutes
         app.MapPost("/register", async (UserRegister request, AppDbContext db, IPasswordHasher<User> hasher) =>
         {
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            {
                 return Results.BadRequest(new { message = "Invalid Credentials" });
-            }
 
             var isEmailValid = VerifyEmailAddress(request.Email);
             if (!isEmailValid)
-            {
                 return Results.BadRequest(new { message = "Invalid Email Address" });
-            }
 
             var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (existingUser is not null)
-            {
                 return Results.Conflict(new { message = "User already exists, Login" });
-            }
 
             var user = new User
             {
