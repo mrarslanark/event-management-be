@@ -21,6 +21,19 @@ public static class DbSeeder
         await db.SaveChangesAsync();
         Console.WriteLine($"✅ Seeded Roles: {string.Join(", ", roles)}");
 
+        // Add Event Types to Database
+        var eventTypes = new[] { "Music", "Sports", "Conference", "Workshop" };
+        foreach (var name in eventTypes)
+        {
+            if (!await db.EventTypes.AnyAsync(et => et.Name == name))
+            {
+                db.EventTypes.Add(new EventType { Name = name });
+            }
+        }
+        
+        await db.SaveChangesAsync();
+        Console.WriteLine($"✅ Seeded Event Types: {string.Join(", ", eventTypes)}");
+        
         // Add first admin
         var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
         var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
@@ -32,7 +45,7 @@ public static class DbSeeder
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .FirstOrDefaultAsync(u => u.Email == adminEmail);
-
+        
         if (existingAdmin == null)
         {
             var adminUser = new User
