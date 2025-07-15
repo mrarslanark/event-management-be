@@ -153,12 +153,18 @@ namespace EventManagement.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("EmailVerificationToken")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("isEmailVerified")
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("Id");
 

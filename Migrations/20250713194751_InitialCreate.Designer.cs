@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250711212603_InitialCreate")]
+    [Migration("20250713194751_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -156,12 +156,18 @@ namespace EventManagement.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("EmailVerificationToken")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("isEmailVerified")
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("Id");
 

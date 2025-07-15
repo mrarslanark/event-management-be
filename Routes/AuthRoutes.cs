@@ -2,8 +2,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using EventManagement.Data;
+using EventManagement.DTOs;
 using EventManagement.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -55,15 +57,23 @@ public static class AuthRoutes
             if (existingUser is not null)
                 return Results.Conflict(new { message = "User already exists, Login" });
 
+            var emailToken = Guid.NewGuid().ToString();
+            
             var user = new User
             {
                 Email = request.Email,
-                PasswordHash = hasher.HashPassword(null!, request.Password)
+                PasswordHash = hasher.HashPassword(null!, request.Password),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                isEmailVerified = false,
+                EmailVerificationToken = emailToken
             };
             user.PasswordHash = hasher.HashPassword(user, request.Password);
 
             db.Users.Add(user);
             await db.SaveChangesAsync();
+            
+            Console.WriteLine($"Simulated verification token: {emailToken}");
 
             var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
             if (role is null)
@@ -89,8 +99,28 @@ public static class AuthRoutes
                 updatedAt = user.UpdatedAt
             });
         });
-    }
 
+        app.MapPost("/verify-email", async (
+            [FromBody] VerifyEmailRequest request,
+            AppDbContext db) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == request.Token);
+            if (user is null)
+                return Results.BadRequest(new { message = "Invalid or expired token." });
+
+            if (user.isEmailVerified)
+                return Results.Ok(new { message = "Email is already verified" });
+
+            user.isEmailVerified = true;
+            user.EmailVerificationToken = null;
+            user.UpdatedAt = DateTime.UtcNow;
+            
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new { message = "Email Verified successfully" });
+        });
+    }
+    
     private static async Task<List<string>> GetRoles(AppDbContext db, string id)
     {
         return await db.UserRoles
