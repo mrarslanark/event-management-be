@@ -77,7 +77,7 @@ public static class EventRoutes
                     }).ToList()
                 });
             })
-            .RequireAuthorization("ManagerOrAdmin")
+            .RequireAuthorization("AdminOrManager")
             .WithName("PostEvent");
 
         app.MapPatch("/events/{id:guid}", async (
@@ -153,7 +153,7 @@ public static class EventRoutes
                     eventEntity.UpdatedAt
                 });
             })
-            .RequireAuthorization("ManagerOrAdmin")
+            .RequireAuthorization("AdminOrManager")
             .WithName("PutEvent");
 
         app.MapDelete("/events/{id:guid}", async (Guid id, AppDbContext db) =>
@@ -171,7 +171,7 @@ public static class EventRoutes
 
                 return Results.Ok(new { message = $"The {eventName} was deleted." });
             })
-            .RequireAuthorization("ManagerOrAdmin")
+            .RequireAuthorization("AdminOrManager")
             .WithName("DeleteEvent");
 
         app.MapDelete("/events", async (AppDbContext db) =>
