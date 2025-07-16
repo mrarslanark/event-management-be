@@ -17,9 +17,6 @@ public static class UserRoutes
             IConfiguration config,
             HttpContext http) =>
         {
-            if (!http.User.IsInRole("Admin"))
-                return Results.Forbid();
-
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
                 return Results.BadRequest(new { message = "Email and password are required" });
 
@@ -56,6 +53,6 @@ public static class UserRoutes
                 createdAt = DateTimeOffset.UtcNow,
                 updatedAt = DateTimeOffset.UtcNow,
             });
-        }).RequireAuthorization(policy => policy.RequireRole("Admin"));
+        }).RequireAuthorization("AdminOnly");
     }
 }

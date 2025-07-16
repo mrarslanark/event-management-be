@@ -9,12 +9,8 @@ public static class KycRoutes
     {
         app.MapPost("/kyc/approve/{userId:guid}", async (
             Guid userId,
-            AppDbContext db,
-            HttpContext http) =>
+            AppDbContext db) =>
         {
-            if (!http.User.IsInRole("Admin"))
-                return Results.Forbid();
-
             var user = await db.Users
                 .Include(u => u.UserRoles)
                 .FirstOrDefaultAsync(u => u.Id == userId);
@@ -38,6 +34,6 @@ public static class KycRoutes
 
             await db.SaveChangesAsync();
             return Results.Ok(new { message = $"User {user.Email} has been promoted to 'Manager'." });
-        }).RequireAuthorization(policy => policy.RequireRole("Admin"));
+        }).RequireAuthorization("AdminOnly");
     }
 }
