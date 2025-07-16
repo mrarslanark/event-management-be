@@ -98,7 +98,7 @@ public static class EventRoutes
                 if (eventEntity is null)
                     return Results.NotFound(new { message = "Event not found." });
 
-                if (eventEntity.CreatedByUserId.ToString() != userId)
+                if (!http.User.IsInRole("Admin") && eventEntity.CreatedByUserId.ToString() != userId)
                     return Results.Forbid();
                 
                 if (request.Name is not null) eventEntity.Name = request.Name;
