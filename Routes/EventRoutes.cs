@@ -23,12 +23,6 @@ public static class EventRoutes
                 if (userId is null)
                     return Results.Unauthorized();
 
-                var isManager = http.User.IsInRole("Manager");
-                var isAdmin = http.User.IsInRole("Admin");
-                
-                if (!isManager && !isAdmin)
-                    return Results.Forbid();
-
                 var eventType = await db.EventTypes.FindAsync(request.EventTypeId);
                 if (eventType is null)
                     return Results.BadRequest(new { message = "Invalid Event Type ID." });
@@ -83,7 +77,7 @@ public static class EventRoutes
                     }).ToList()
                 });
             })
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Manager"))
+            .RequireAuthorization("ManagerOrAdmin")
             .WithName("PostEvent");
 
         app.MapPatch("/events/{id:guid}", async (
@@ -96,11 +90,6 @@ public static class EventRoutes
                 if (userId is null)
                     return Results.Unauthorized();
 
-                var isAdmin = http.User.IsInRole("Admin");
-                var isManager = http.User.IsInRole("Manager");
-                if (!isAdmin && !isManager)
-                    return Results.Forbid();
-
                 var eventEntity = await db.Events
                     .Include(e => e.Tickets)
                     .Include(e => e.EventType)
@@ -109,7 +98,7 @@ public static class EventRoutes
                 if (eventEntity is null)
                     return Results.NotFound(new { message = "Event not found." });
 
-                if (!isAdmin && eventEntity.CreatedByUserId.ToString() != userId)
+                if (eventEntity.CreatedByUserId.ToString() != userId)
                     return Results.Forbid();
                 
                 if (request.Name is not null) eventEntity.Name = request.Name;
@@ -164,7 +153,7 @@ public static class EventRoutes
                     eventEntity.UpdatedAt
                 });
             })
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Manager"))
+            .RequireAuthorization("ManagerOrAdmin")
             .WithName("PutEvent");
 
         app.MapDelete("/events/{id:guid}", async (Guid id, AppDbContext db) =>
@@ -182,7 +171,7 @@ public static class EventRoutes
 
                 return Results.Ok(new { message = $"The {eventName} was deleted." });
             })
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Manager"))
+            .RequireAuthorization("ManagerOrAdmin")
             .WithName("DeleteEvent");
 
         app.MapDelete("/events", async (AppDbContext db) =>
@@ -198,7 +187,7 @@ public static class EventRoutes
 
                 return Results.Ok(new { message = $"All {events.Count} events have been deleted." });
             })
-            .RequireAuthorization(policy => policy.RequireRole("Admin"))
+            .RequireAuthorization("AdminOnly")
             .WithName("DeleteEvents");
     }
 }
