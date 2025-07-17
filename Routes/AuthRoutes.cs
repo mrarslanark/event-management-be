@@ -142,15 +142,13 @@ public static class AuthRoutes
             existingToken.IsRevoked = true;
 
             var roles = await GetRoles(db, userId);
-            // Generate new tokens
-            var newAccessToken = GenerateToken(userId, user.Email, roles);
-            var newRefreshToken = GenerateRefreshToken();
+            var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
 
             await db.SaveChangesAsync();
             return Results.Ok(new
             {
-                accessToken = newAccessToken,
-                refreshToken = newRefreshToken
+                token = accessToken,
+                refreshToken
             });
         });
     }
