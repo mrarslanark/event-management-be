@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using EventManagement.Data;
 using EventManagement.DTOs;
@@ -22,7 +23,7 @@ public static class AuthRoutes
                 if (!isEmailValid)
                     return Results.BadRequest(new { message = "Invalid Email Address" });
 
-                // Find user from database
+                // Find user from db
                 var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
                 if (user is null)
                     return Results.BadRequest(new { message = "Invalid Credentials" });
@@ -30,13 +31,14 @@ public static class AuthRoutes
                 var result = hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
                 if (result is not PasswordVerificationResult.Success)
                     return Results.BadRequest(new { message = "Invalid Credentials" });
-                
-                var roles =  await GetRoles(db, user.Id.ToString());
 
-                var tokenString = GenerateToken(user.Id.ToString(), user.Email, roles);
+                var roles = await GetRoles(db, user.Id.ToString());
+                var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
+
                 return Results.Ok(new
                 {
-                    token = tokenString,
+                    token = accessToken,
+                    refreshToken,
                     email = user.Email,
                     roles,
                     createdAt = user.CreatedAt,
@@ -58,7 +60,7 @@ public static class AuthRoutes
                 return Results.Conflict(new { message = "User already exists, Login" });
 
             var emailToken = Guid.NewGuid().ToString();
-            
+
             var user = new User
             {
                 Email = request.Email,
@@ -72,7 +74,7 @@ public static class AuthRoutes
 
             db.Users.Add(user);
             await db.SaveChangesAsync();
-            
+
             Console.WriteLine($"Simulated verification token: {emailToken}");
 
             var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
@@ -88,11 +90,12 @@ public static class AuthRoutes
 
             var roles = await GetRoles(db, user.Id.ToString());
 
-            var tokenString = GenerateToken(user.Id.ToString(), user.Email, roles);
+            var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
 
             return Results.Created($"/users/{user.Id}", new
             {
-                token = tokenString,
+                token = accessToken,
+                refreshToken,
                 email = user.Email,
                 roles,
                 createdAt = user.CreatedAt,
@@ -114,13 +117,67 @@ public static class AuthRoutes
             user.isEmailVerified = true;
             user.EmailVerificationToken = null;
             user.UpdatedAt = DateTime.UtcNow;
-            
+
             await db.SaveChangesAsync();
 
             return Results.Ok(new { message = "Email Verified successfully" });
         });
+
+        app.MapPost("/refresh-token", async (
+            RefreshTokenRequest request,
+            AppDbContext db) =>
+        {
+            var existingToken = await db.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken && !rt.IsRevoked);
+            if (existingToken is null || existingToken.ExpiresAt < DateTime.UtcNow)
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = existingToken.User;
+            var userId = user.Id.ToString();
+
+            // Revoke old token
+            existingToken.IsRevoked = true;
+
+            var roles = await GetRoles(db, userId);
+            // Generate new tokens
+            var newAccessToken = GenerateToken(userId, user.Email, roles);
+            var newRefreshToken = GenerateRefreshToken();
+
+            await db.SaveChangesAsync();
+            return Results.Ok(new
+            {
+                accessToken = newAccessToken,
+                refreshToken = newRefreshToken
+            });
+        });
     }
-    
+
+    private static async Task<(string? accessToken, string refreshToken)> GenerateTokensAsync(Guid userId,
+        string email, List<string> roles, AppDbContext db)
+    {
+        var accessToken = GenerateToken(userId.ToString(), email, roles);
+        var refreshToken = GenerateRefreshToken();
+
+        db.RefreshTokens.Add(new RefreshToken
+        {
+            Token = refreshToken,
+            UserId = userId,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            IsRevoked = false
+        });
+        await db.SaveChangesAsync();
+
+        return (accessToken, refreshToken);
+    }
+
+    private static string GenerateRefreshToken()
+    {
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+    }
+
     private static async Task<List<string>> GetRoles(AppDbContext db, string id)
     {
         return await db.UserRoles
