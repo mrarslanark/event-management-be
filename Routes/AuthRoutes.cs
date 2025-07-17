@@ -23,7 +23,7 @@ public static class AuthRoutes
                 if (!isEmailValid)
                     return Results.BadRequest(new { message = "Invalid Email Address" });
 
-                // Find user from db
+                // Find user from the database
                 var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
                 if (user is null)
                     return Results.BadRequest(new { message = "Invalid Credentials" });
@@ -34,7 +34,9 @@ public static class AuthRoutes
 
                 var roles = await GetRoles(db, user.Id.ToString());
                 var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
-
+                if (accessToken is null || refreshToken is null)
+                    return Results.BadRequest(new { message = "Invalid Credentials" });
+                
                 return Results.Ok(new
                 {
                     token = accessToken,
@@ -91,6 +93,8 @@ public static class AuthRoutes
             var roles = await GetRoles(db, user.Id.ToString());
 
             var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
+            if (accessToken is null || refreshToken is null)
+                return Results.BadRequest(new { message = "Invalid Credentials" });
 
             return Results.Created($"/users/{user.Id}", new
             {
@@ -136,6 +140,9 @@ public static class AuthRoutes
             }
 
             var user = existingToken.User;
+            if (user is null)
+                return Results.BadRequest(new { message = "Invalid refresh token." });
+            
             var userId = user.Id.ToString();
 
             // Revoke old token
@@ -143,8 +150,9 @@ public static class AuthRoutes
 
             var roles = await GetRoles(db, userId);
             var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
-
-            await db.SaveChangesAsync();
+            if (accessToken is null || refreshToken is null)
+                return Results.BadRequest(new { message = "Unable to refresh token." });
+            
             return Results.Ok(new
             {
                 token = accessToken,
@@ -153,17 +161,24 @@ public static class AuthRoutes
         });
     }
 
-    private static async Task<(string? accessToken, string refreshToken)> GenerateTokensAsync(Guid userId,
+    private static async Task<(string? accessToken, string? refreshToken)> GenerateTokensAsync(Guid userId,
         string email, List<string> roles, AppDbContext db)
     {
         var accessToken = GenerateToken(userId.ToString(), email, roles);
         var refreshToken = GenerateRefreshToken();
 
+        if (accessToken is null || refreshToken is null)
+            return (null, null);
+        
+        var refreshTokenExpiryDays = Environment.GetEnvironmentVariable("AUTH_REFRESH_TOKEN_EXPIRE_DAYS");
+        if (refreshTokenExpiryDays is null)
+            return (null, null);
+
         db.RefreshTokens.Add(new RefreshToken
         {
             Token = refreshToken,
             UserId = userId,
-            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            ExpiresAt = DateTime.UtcNow.AddDays(int.Parse(refreshTokenExpiryDays)),
             IsRevoked = false
         });
         await db.SaveChangesAsync();
@@ -171,9 +186,10 @@ public static class AuthRoutes
         return (accessToken, refreshToken);
     }
 
-    private static string GenerateRefreshToken()
+    private static string? GenerateRefreshToken()
     {
-        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        var refreshTokenSize = Environment.GetEnvironmentVariable("AUTH_REFRESH_TOKEN_SIZE");
+        return refreshTokenSize is null ? null : Convert.ToBase64String(RandomNumberGenerator.GetBytes(int.Parse(refreshTokenSize)));
     }
 
     private static async Task<List<string>> GetRoles(AppDbContext db, string id)
