@@ -172,14 +172,14 @@ public static class AuthRoutes
             return (null, null);
         
         var refreshTokenExpiryDays = Environment.GetEnvironmentVariable("AUTH_REFRESH_TOKEN_EXPIRE_DAYS");
-        if (refreshTokenExpiryDays is null)
+        if (refreshTokenExpiryDays is null || !int.TryParse(refreshTokenExpiryDays, out var expiryDays) || expiryDays <= 0)
             return (null, null);
-
+        
         db.RefreshTokens.Add(new RefreshToken
         {
             Token = refreshToken,
             UserId = userId,
-            ExpiresAt = DateTime.UtcNow.AddDays(int.TryParse(refreshTokenExpiryDays, out var days) ? days : 7),
+            ExpiresAt = DateTime.UtcNow.AddDays(expiryDays),
             IsRevoked = false
         });
         await db.SaveChangesAsync();
@@ -192,7 +192,7 @@ public static class AuthRoutes
         var refreshTokenSize = Environment.GetEnvironmentVariable("AUTH_REFRESH_TOKEN_SIZE");
         if (refreshTokenSize is null || !int.TryParse(refreshTokenSize, out var size) || size <= 0)
             return null;
-        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(int.Parse(refreshTokenSize)));
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(size));
     }
 
     private static async Task<List<string>> GetRoles(AppDbContext db, string id)
