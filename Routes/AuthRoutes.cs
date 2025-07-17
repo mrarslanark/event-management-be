@@ -147,6 +147,7 @@ public static class AuthRoutes
 
             // Revoke old token
             existingToken.IsRevoked = true;
+            await db.SaveChangesAsync();
 
             var roles = await GetRoles(db, userId);
             var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
@@ -178,7 +179,7 @@ public static class AuthRoutes
         {
             Token = refreshToken,
             UserId = userId,
-            ExpiresAt = DateTime.UtcNow.AddDays(int.Parse(refreshTokenExpiryDays)),
+            ExpiresAt = DateTime.UtcNow.AddDays(int.TryParse(refreshTokenExpiryDays, out var days) ? days : 7),
             IsRevoked = false
         });
         await db.SaveChangesAsync();
@@ -189,7 +190,9 @@ public static class AuthRoutes
     private static string? GenerateRefreshToken()
     {
         var refreshTokenSize = Environment.GetEnvironmentVariable("AUTH_REFRESH_TOKEN_SIZE");
-        return refreshTokenSize is null ? null : Convert.ToBase64String(RandomNumberGenerator.GetBytes(int.Parse(refreshTokenSize)));
+        if (refreshTokenSize is null || !int.TryParse(refreshTokenSize, out var size) || size <= 0)
+            return null;
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(int.Parse(refreshTokenSize)));
     }
 
     private static async Task<List<string>> GetRoles(AppDbContext db, string id)
