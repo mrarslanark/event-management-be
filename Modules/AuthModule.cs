@@ -25,7 +25,7 @@ public class AuthModule : ICarterModule
         app.MapPost("/refresh-token", RefreshToken);
     }
 
-    private static async Task<IResult> Login(UserLogin request, AppDbContext db, IPasswordHasher<User> hasher)
+    private static async Task<IResult> Login(UserLoginRequest request, AppDbContext db, IPasswordHasher<User> hasher)
     {
         var isEmailValid = VerifyEmailAddress(request.Email);
         if (!isEmailValid)
@@ -57,16 +57,9 @@ public class AuthModule : ICarterModule
         });
     }
 
-    private static async Task<IResult> Register(UserRegister request, IValidator<UserRegister> validator,
+    private static async Task<IResult> Register(UserRegisterRequest request, IValidator<UserRegisterRequest> validator,
         AppDbContext db, IPasswordHasher<User> hasher)
     {
-        // if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-        //     return Results.BadRequest(new { message = "Invalid Credentials" });
-        //
-        // var isEmailValid = VerifyEmailAddress(request.Email);
-        // if (!isEmailValid)
-        //     return Results.BadRequest(new { message = "Invalid Email Address" });
-
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
             return Results.ValidationProblem(validation.ToDictionary());

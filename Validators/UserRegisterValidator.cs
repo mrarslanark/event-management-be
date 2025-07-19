@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace EventManagement.Validators;
 
-public class UserRegisterValidator : AbstractValidator<UserRegister>
+public class UserRegisterValidator : AbstractValidator<UserRegisterRequest>
 {
     public UserRegisterValidator()
     {
