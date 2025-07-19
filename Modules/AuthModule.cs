@@ -6,6 +6,8 @@ using Carter;
 using EventManagement.Data;
 using EventManagement.DTOs;
 using EventManagement.Models;
+using EventManagement.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -55,14 +57,19 @@ public class AuthModule : ICarterModule
         });
     }
 
-    private static async Task<IResult> Register(UserRegister request, AppDbContext db, IPasswordHasher<User> hasher)
+    private static async Task<IResult> Register(UserRegister request, IValidator<UserRegister> validator,
+        AppDbContext db, IPasswordHasher<User> hasher)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            return Results.BadRequest(new { message = "Invalid Credentials" });
+        // if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        //     return Results.BadRequest(new { message = "Invalid Credentials" });
+        //
+        // var isEmailValid = VerifyEmailAddress(request.Email);
+        // if (!isEmailValid)
+        //     return Results.BadRequest(new { message = "Invalid Email Address" });
 
-        var isEmailValid = VerifyEmailAddress(request.Email);
-        if (!isEmailValid)
-            return Results.BadRequest(new { message = "Invalid Email Address" });
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
+            return Results.ValidationProblem(validation.ToDictionary());
 
         var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (existingUser is not null)
