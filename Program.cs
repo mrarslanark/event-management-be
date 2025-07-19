@@ -1,5 +1,4 @@
 using EventManagement.Data;
-using EventManagement.Routes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
