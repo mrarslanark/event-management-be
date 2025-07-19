@@ -6,7 +6,6 @@ using Carter;
 using EventManagement.Data;
 using EventManagement.DTOs;
 using EventManagement.Models;
-using EventManagement.Routes;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -145,7 +144,7 @@ public class AuthModule : ICarterModule
         var user = existingToken.User;
         if (user is null)
             return Results.BadRequest(new { message = "Invalid refresh token." });
-            
+
         var userId = user.Id.ToString();
 
         // Revoke old token
@@ -156,14 +155,14 @@ public class AuthModule : ICarterModule
         var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
         if (accessToken is null || refreshToken is null)
             return Results.BadRequest(new { message = "Unable to refresh token." });
-            
+
         return Results.Ok(new
         {
             token = accessToken,
             refreshToken
         });
     }
-    
+
     private static bool VerifyEmailAddress(string email)
     {
         return System.Net.Mail.MailAddress.TryCreate(email, out _);
