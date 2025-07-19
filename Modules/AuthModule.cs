@@ -6,7 +6,6 @@ using Carter;
 using EventManagement.Data;
 using EventManagement.DTOs;
 using EventManagement.Models;
-using EventManagement.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -25,11 +24,11 @@ public class AuthModule : ICarterModule
         app.MapPost("/refresh-token", RefreshToken);
     }
 
-    private static async Task<IResult> Login(UserLoginRequest request, AppDbContext db, IPasswordHasher<User> hasher)
+    private static async Task<IResult> Login(UserLoginRequest request, IValidator<UserLoginRequest> validator, AppDbContext db, IPasswordHasher<User> hasher)
     {
-        var isEmailValid = VerifyEmailAddress(request.Email);
-        if (!isEmailValid)
-            return Results.BadRequest(new { message = "Invalid Email Address" });
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
+            return Results.ValidationProblem(validation.ToDictionary());
 
         // Find user from the database
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);

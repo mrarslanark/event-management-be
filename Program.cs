@@ -14,7 +14,7 @@ Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCarter();
-builder.Services.AddValidatorsFromAssemblyContaining<UserRegisterValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var dbUser = Environment.GetEnvironmentVariable("DB_USER");
 var dbPass = Environment.GetEnvironmentVariable("DB_PASS");
