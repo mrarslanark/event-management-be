@@ -82,12 +82,6 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Routes
-app.MapCarter(); // replaces manual route mappings
-// app.MapAuthEndpoints();
-// app.MapEventEndpoints();
-// app.MapKycEndpoints();
-// app.MapUserRoutes();
+app.MapCarter();
 
 app.Run();

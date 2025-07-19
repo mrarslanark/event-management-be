@@ -45,6 +45,7 @@ public class AuthModule : ICarterModule
 
         return Results.Ok(new
         {
+            uid = user.Id,
             token = accessToken,
             refreshToken,
             email = user.Email,
