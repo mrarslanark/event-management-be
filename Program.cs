@@ -4,13 +4,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Carter;
 using DotNetEnv;
 using EventManagement.Models;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 
 Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCarter();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var dbUser = Environment.GetEnvironmentVariable("DB_USER");
 var dbPass = Environment.GetEnvironmentVariable("DB_PASS");
@@ -79,9 +84,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Routes
-app.MapAuthEndpoints();
-app.MapEventEndpoints();
-app.MapKycEndpoints();
-app.MapUserRoutes();
+app.MapCarter(); // replaces manual route mappings
+// app.MapAuthEndpoints();
+// app.MapEventEndpoints();
+// app.MapKycEndpoints();
+// app.MapUserRoutes();
 
 app.Run();

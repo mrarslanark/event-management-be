@@ -1,5 +1,6 @@
 using EventManagement.Data;
 using EventManagement.Models;
+using EventManagement.Modules;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
@@ -45,7 +46,7 @@ public static class UserRoutes
             db.UserRoles.AddRange(new UserRole { UserId = newUser.Id, RoleId = adminRole.Id }, new UserRole { UserId = newUser.Id, RoleId = userRole.Id });
             await db.SaveChangesAsync();
             
-            var tokenString = AuthRoutes.GenerateToken(newUser.Id.ToString(), newUser.Email, ["Admin", "User"]);
+            var tokenString = AuthModule.GenerateToken(newUser.Id.ToString(), newUser.Email, ["Admin", "User"]);
             return Results.Created($"/users/{newUser.Id}", new
             {
                 token = tokenString,
