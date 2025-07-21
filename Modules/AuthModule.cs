@@ -24,7 +24,8 @@ public class AuthModule : ICarterModule
         app.MapPost("/refresh-token", RefreshToken);
     }
 
-    private static async Task<IResult> Login(UserLoginRequest request, IValidator<UserLoginRequest> validator, AppDbContext db, IPasswordHasher<User> hasher)
+    private static async Task<IResult> Login(UserLoginRequest request, IValidator<UserLoginRequest> validator,
+        AppDbContext db, IPasswordHasher<User> hasher)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -131,15 +132,18 @@ public class AuthModule : ICarterModule
         return Results.Ok(new { message = "Email Verified successfully" });
     }
 
-    private static async Task<IResult> RefreshToken(RefreshTokenRequest request, AppDbContext db)
+    private static async Task<IResult> RefreshToken(RefreshTokenRequest request,
+        IValidator<RefreshTokenRequest> validator, AppDbContext db)
     {
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
+            return Results.ValidationProblem(validation.ToDictionary());
+
         var existingToken = await db.RefreshTokens
             .Include(rt => rt.User)
             .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken && !rt.IsRevoked);
         if (existingToken is null || existingToken.ExpiresAt < DateTime.UtcNow)
-        {
             return Results.Unauthorized();
-        }
 
         var user = existingToken.User;
         if (user is null)
