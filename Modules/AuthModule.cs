@@ -114,8 +114,12 @@ public class AuthModule : ICarterModule
         });
     }
 
-    private static async Task<IResult> VerifyEmail([FromBody] VerifyEmailRequest request, AppDbContext db)
+    private static async Task<IResult> VerifyEmail([FromBody] VerifyEmailRequest request, IValidator<VerifyEmailRequest> validator, AppDbContext db)
     {
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
+            return Results.ValidationProblem(validation.ToDictionary());
+        
         var user = await db.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == request.Token);
         if (user is null)
             return Results.BadRequest(new { message = "Invalid or expired token." });
@@ -165,11 +169,6 @@ public class AuthModule : ICarterModule
             token = accessToken,
             refreshToken
         });
-    }
-
-    private static bool VerifyEmailAddress(string email)
-    {
-        return System.Net.Mail.MailAddress.TryCreate(email, out _);
     }
 
     private static async Task<List<string>> GetRoles(AppDbContext db, string id)
