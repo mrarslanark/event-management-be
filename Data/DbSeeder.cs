@@ -9,6 +9,17 @@ public static class DbSeeder
     public static async Task Seed(AppDbContext db, IPasswordHasher<User> hasher)
     {
         // Add Roles to Database
+        await AddRoles(db);
+
+        // Add Event Types to Database
+        await AddEventTypes(db);
+        
+        // Add first admin
+        await AddFirstAdmin(db, hasher);
+    }
+
+    private static async Task AddRoles(AppDbContext db)
+    {
         var roles = new[] { "Admin", "Manager", "User" };
         foreach (var roleName in roles)
         {
@@ -20,8 +31,10 @@ public static class DbSeeder
 
         await db.SaveChangesAsync();
         Console.WriteLine($"✅ Seeded Roles: {string.Join(", ", roles)}");
+    }
 
-        // Add Event Types to Database
+    private static async Task AddEventTypes(AppDbContext db)
+    {
         var eventTypes = new[] { "Music", "Sports", "Conference", "Workshop" };
         foreach (var name in eventTypes)
         {
@@ -33,25 +46,27 @@ public static class DbSeeder
         
         await db.SaveChangesAsync();
         Console.WriteLine($"✅ Seeded Event Types: {string.Join(", ", eventTypes)}");
-        
-        // Add first admin
-        var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
-        var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+    }
 
-        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+    private static async Task AddFirstAdmin(AppDbContext db, IPasswordHasher<User> hasher)
+    {
+        var email = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
+        var password = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             throw new Exception("Seed admin credentials not provided.");
 
         var existingAdmin = await db.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
-            .FirstOrDefaultAsync(u => u.Email == adminEmail);
+            .FirstOrDefaultAsync(u => u.Email == email);
         
         if (existingAdmin == null)
         {
             var adminUser = new User
             {
-                Email = adminEmail,
-                PasswordHash = hasher.HashPassword(null!, adminPassword)
+                Email = email,
+                PasswordHash = hasher.HashPassword(null!, password)
             };
 
             db.Users.Add(adminUser);
@@ -68,7 +83,7 @@ public static class DbSeeder
             db.UserRoles.AddRange(new UserRole { UserId = adminUser.Id, RoleId = adminRole.Id },
                 new UserRole { UserId = adminUser.Id, RoleId = userRole.Id });
             await db.SaveChangesAsync();
-            Console.WriteLine($"✅ Seeded first Admin: {adminEmail}");
+            Console.WriteLine($"✅ Seeded first Admin: {email}");
         }
     }
 }

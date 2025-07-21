@@ -1,16 +1,20 @@
 using EventManagement.Data;
-using EventManagement.Routes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Carter;
 using DotNetEnv;
 using EventManagement.Models;
+using EventManagement.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 
 Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddCarter();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var dbUser = Environment.GetEnvironmentVariable("DB_USER");
 var dbPass = Environment.GetEnvironmentVariable("DB_PASS");
@@ -51,13 +55,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         }
     };
 });
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("AdminOrManager", policy => policy.RequireRole("Admin", "Manager"));
-});
 
 // Add services to the container.
+builder.Services.AddAuthorization();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -77,11 +77,6 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Routes
-app.MapAuthEndpoints();
-app.MapEventEndpoints();
-app.MapKycEndpoints();
-app.MapUserRoutes();
+app.MapCarter();
 
 app.Run();

@@ -4,6 +4,7 @@ using EventManagement.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250719183701_AddValidationsForRegistration")]
+    partial class AddValidationsForRegistration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,7 +41,6 @@ namespace EventManagement.Migrations
                         .HasColumnType("char(36)");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("EndTime")
@@ -51,21 +53,18 @@ namespace EventManagement.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Location")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int?>("MaxAttendees")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Tags")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -87,7 +86,6 @@ namespace EventManagement.Migrations
                         .HasColumnType("char(36)");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -108,7 +106,6 @@ namespace EventManagement.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Token")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<Guid>("UserId")
@@ -131,7 +128,6 @@ namespace EventManagement.Migrations
                         .HasColumnType("char(36)");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -149,14 +145,12 @@ namespace EventManagement.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<Guid>("EventId")
                         .HasColumnType("char(36)");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<float>("Price")
@@ -179,14 +173,12 @@ namespace EventManagement.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("EmailVerificationToken")
                         .HasColumnType("longtext");
 
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("UpdatedAt")
