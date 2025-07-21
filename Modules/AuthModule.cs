@@ -24,8 +24,12 @@ public class AuthModule : ICarterModule
         app.MapPost("/refresh-token", RefreshToken);
     }
 
-    private static async Task<IResult> Login(UserLoginRequest request, IValidator<UserLoginRequest> validator,
-        AppDbContext db, IPasswordHasher<User> hasher)
+    private static async Task<IResult> Login(
+        IConfiguration config, 
+        UserLoginRequest request,
+        IValidator<UserLoginRequest> validator,
+        AppDbContext db, 
+        IPasswordHasher<User> hasher)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -41,7 +45,7 @@ public class AuthModule : ICarterModule
             return Results.BadRequest(new { message = "Invalid Credentials" });
 
         var roles = await GetRoles(db, user.Id.ToString());
-        var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
+        var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, db);
         if (accessToken is null || refreshToken is null)
             return Results.BadRequest(new { message = "Invalid Credentials" });
 
@@ -57,8 +61,12 @@ public class AuthModule : ICarterModule
         });
     }
 
-    private static async Task<IResult> Register(UserRegisterRequest request, IValidator<UserRegisterRequest> validator,
-        AppDbContext db, IPasswordHasher<User> hasher)
+    private static async Task<IResult> Register(
+        IConfiguration config, 
+        UserRegisterRequest request,
+        IValidator<UserRegisterRequest> validator,
+        AppDbContext db, 
+        IPasswordHasher<User> hasher)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -99,7 +107,7 @@ public class AuthModule : ICarterModule
 
         var roles = await GetRoles(db, user.Id.ToString());
 
-        var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
+        var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, db);
         if (accessToken is null || refreshToken is null)
             return Results.BadRequest(new { message = "Invalid Credentials" });
 
@@ -114,12 +122,15 @@ public class AuthModule : ICarterModule
         });
     }
 
-    private static async Task<IResult> VerifyEmail([FromBody] VerifyEmailRequest request, IValidator<VerifyEmailRequest> validator, AppDbContext db)
+    private static async Task<IResult> VerifyEmail(
+        [FromBody] VerifyEmailRequest request,
+        IValidator<VerifyEmailRequest> validator, 
+        AppDbContext db)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
             return Results.ValidationProblem(validation.ToDictionary());
-        
+
         var user = await db.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == request.Token);
         if (user is null)
             return Results.BadRequest(new { message = "Invalid or expired token." });
@@ -136,8 +147,11 @@ public class AuthModule : ICarterModule
         return Results.Ok(new { message = "Email Verified successfully" });
     }
 
-    private static async Task<IResult> RefreshToken(RefreshTokenRequest request,
-        IValidator<RefreshTokenRequest> validator, AppDbContext db)
+    private static async Task<IResult> RefreshToken(
+        IConfiguration config, 
+        RefreshTokenRequest request,
+        IValidator<RefreshTokenRequest> validator, 
+        AppDbContext db)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -160,7 +174,7 @@ public class AuthModule : ICarterModule
         await db.SaveChangesAsync();
 
         var roles = await GetRoles(db, userId);
-        var (accessToken, refreshToken) = await GenerateTokensAsync(user.Id, user.Email, roles, db);
+        var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, db);
         if (accessToken is null || refreshToken is null)
             return Results.BadRequest(new { message = "Unable to refresh token." });
 
@@ -180,12 +194,15 @@ public class AuthModule : ICarterModule
             .ToListAsync();
     }
 
-    public static string? GenerateToken(string userId, string email, List<string> roles)
+    public static string? GenerateToken(
+        IConfiguration config, 
+        string userId, 
+        string email, 
+        List<string> roles)
     {
-        var authKey = Environment.GetEnvironmentVariable("AUTH_KEY");
-        var issuer = Environment.GetEnvironmentVariable("AUTH_ISSUER");
-        var audience = Environment.GetEnvironmentVariable("AUTH_AUDIENCE");
-        var expiration = Environment.GetEnvironmentVariable("AUTH_EXPIRE_MINUTES");
+        var jwt = config.GetSection("Jwt");
+        var authKey = jwt["Key"];
+        var expiration = jwt["ExpiryMinutes"];
 
         if (authKey == null || expiration == null) return null;
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authKey));
@@ -199,8 +216,8 @@ public class AuthModule : ICarterModule
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
         var token = new JwtSecurityToken(
-            issuer,
-            audience,
+            issuer: jwt["Issuer"],
+            audience: jwt["Audience"],
             expires: DateTime.UtcNow.AddMinutes(double.Parse(expiration)),
             signingCredentials: signingCredentials,
             claims: claims
@@ -218,10 +235,11 @@ public class AuthModule : ICarterModule
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(size));
     }
 
-    private static async Task<(string? accessToken, string? refreshToken)> GenerateTokensAsync(Guid userId,
+    private static async Task<(string? accessToken, string? refreshToken)> GenerateTokensAsync(IConfiguration config,
+        Guid userId,
         string email, List<string> roles, AppDbContext db)
     {
-        var accessToken = GenerateToken(userId.ToString(), email, roles);
+        var accessToken = GenerateToken(config, userId.ToString(), email, roles);
         var refreshToken = GenerateRefreshToken();
 
         if (accessToken is null || refreshToken is null)
