@@ -49,7 +49,7 @@ public class UserModule : ICarterModule
         db.UserRoles.AddRange(new UserRole { UserId = newUser.Id, RoleId = adminRole.Id }, new UserRole { UserId = newUser.Id, RoleId = userRole.Id });
         await db.SaveChangesAsync();
             
-        var tokenString = AuthModule.GenerateToken(newUser.Id.ToString(), newUser.Email, ["Admin", "User"]);
+        var tokenString = AuthModule.GenerateToken(config, newUser.Id.ToString(), newUser.Email, ["Admin", "User"]);
         return Results.Created($"/users/{newUser.Id}", new
         {
             token = tokenString,

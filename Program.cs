@@ -6,7 +6,6 @@ using System.Text;
 using Carter;
 using DotNetEnv;
 using EventManagement.Models;
-using EventManagement.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 
@@ -16,18 +15,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCarter();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-var dbUser = Environment.GetEnvironmentVariable("DB_USER");
-var dbPass = Environment.GetEnvironmentVariable("DB_PASS");
-var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
-var dbPort = Environment.GetEnvironmentVariable("DB_PORT");
-var dbName = Environment.GetEnvironmentVariable("DB_NAME");
-
-var authKey = Environment.GetEnvironmentVariable("AUTH_KEY");
-var authIssuer = Environment.GetEnvironmentVariable("AUTH_ISSUER");
-var authAudience = Environment.GetEnvironmentVariable("AUTH_AUDIENCE");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var jwt = builder.Configuration.GetSection("Jwt");
 
 // Database Connection
-var connectionString = $"server={dbHost};port={dbPort};database={dbName};user={dbUser};password={dbPass};";
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
@@ -41,9 +32,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = authIssuer,
-        ValidAudience = authAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authKey))
+        ValidIssuer = jwt["Issuer"],
+        ValidAudience = jwt["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]!))
     };
 
     options.Events = new JwtBearerEvents()
@@ -68,7 +59,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
     db.Database.Migrate();
-    await DbSeeder.Seed(db, hasher);
+    await DbSeeder.Seed(builder.Configuration, db, hasher);
 }
 
 // Configure the HTTP request pipeline.

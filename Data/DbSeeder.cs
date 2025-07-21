@@ -6,7 +6,7 @@ namespace EventManagement.Data;
 
 public static class DbSeeder
 {
-    public static async Task Seed(AppDbContext db, IPasswordHasher<User> hasher)
+    public static async Task Seed(IConfiguration config, AppDbContext db, IPasswordHasher<User> hasher)
     {
         // Add Roles to Database
         await AddRoles(db);
@@ -15,7 +15,7 @@ public static class DbSeeder
         await AddEventTypes(db);
         
         // Add first admin
-        await AddFirstAdmin(db, hasher);
+        await AddFirstAdmin(config, db, hasher);
     }
 
     private static async Task AddRoles(AppDbContext db)
@@ -48,10 +48,11 @@ public static class DbSeeder
         Console.WriteLine($"✅ Seeded Event Types: {string.Join(", ", eventTypes)}");
     }
 
-    private static async Task AddFirstAdmin(AppDbContext db, IPasswordHasher<User> hasher)
+    private static async Task AddFirstAdmin(IConfiguration config, AppDbContext db, IPasswordHasher<User> hasher)
     {
-        var email = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
-        var password = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+        var admin = config.GetSection("Admin");
+        var email = admin["Email"];
+        var password = admin["Password"];
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             throw new Exception("Seed admin credentials not provided.");
