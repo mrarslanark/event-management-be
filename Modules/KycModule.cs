@@ -1,7 +1,6 @@
 using Carter;
 using EventManagement.Data;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventManagement.Modules;
@@ -14,7 +13,6 @@ public class KycModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpPatch("/kyc/approve/{userId:guid}")]
     private static async Task<IResult> KycApproved(Guid userId, AppDbContext db)
     {
         var user = await db.Users

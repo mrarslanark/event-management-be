@@ -5,8 +5,6 @@ using EventManagement.DTOs;
 using EventManagement.Models;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventManagement.Modules;
@@ -106,7 +104,6 @@ public class EventModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin,Manager")]
-    [HttpPatch("/events/{id:guid}")]
     private static async Task<IResult> UpdateEvent(Guid id, PatchEventRequest request,
         IValidator<PatchEventRequest> validator, AppDbContext db,
         HttpContext http)
@@ -184,7 +181,6 @@ public class EventModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin,Manager")]
-    [HttpPatch("/events/{id:guid}")]
     private static async Task<IResult> DeleteEvent(Guid id, AppDbContext db)
     {
         var existingEvent = await db.Events.FindAsync(id);
@@ -200,7 +196,6 @@ public class EventModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpPatch("/events")]
     private static async Task<IResult> DeleteAllEvents(AppDbContext db)
     {
         var events = await db.Events.ToListAsync();

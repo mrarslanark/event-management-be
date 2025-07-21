@@ -23,7 +23,7 @@ public class PatchEventRequestValidator : AbstractValidator<PatchEventRequest>
         
         RuleFor(x => x.Description)
             .NotEmpty().WithMessage("Description is required.")
-            .MaximumLength(3_000).WithMessage("Description must not exceed 3000 characters.");
+            .MaximumLength(3_000).WithMessage("Description must not exceed 3,000 characters.");
         
         RuleFor(x => x.EventTypeId)
             .NotEmpty().WithMessage("Event Type ID is required.");
