@@ -3,6 +3,7 @@ using Carter;
 using EventManagement.Data;
 using EventManagement.DTOs;
 using EventManagement.Models;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -27,8 +28,13 @@ public class EventModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin,Manager")]
-    private static async Task<IResult> CreateEvent(CreateEventRequest request, AppDbContext db, HttpContext http)
+    private static async Task<IResult> CreateEvent(CreateEventRequest request, IValidator<CreateEventRequest> validator,
+        AppDbContext db, HttpContext http)
     {
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
+            return Results.ValidationProblem(validation.ToDictionary());
+
         var userId = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId is null)
             return Results.Unauthorized();
@@ -91,9 +97,14 @@ public class EventModule : ICarterModule
 
     [Authorize(Roles = "Admin,Manager")]
     [HttpPatch("/events/{id:guid}")]
-    private static async Task<IResult> UpdateEvent(Guid id, PatchEventRequest request, AppDbContext db,
+    private static async Task<IResult> UpdateEvent(Guid id, PatchEventRequest request,
+        IValidator<PatchEventRequest> validator, AppDbContext db,
         HttpContext http)
     {
+        var validation = await validator.ValidateAsync(request);
+        if (!validation.IsValid)
+            return Results.ValidationProblem(validation.ToDictionary());
+
         var userId = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId is null)
             return Results.Unauthorized();
@@ -134,7 +145,6 @@ public class EventModule : ICarterModule
         }
 
         eventEntity.UpdatedAt = DateTime.UtcNow;
-
         await db.SaveChangesAsync();
 
         return Results.Ok(new
