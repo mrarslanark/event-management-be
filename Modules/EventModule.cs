@@ -179,9 +179,7 @@ public class EventModule : ICarterModule
     {
         var existingEvent = await db.Events.FindAsync(id);
         if (existingEvent is null)
-        {
             return Results.NotFound(new { message = $"Event with ID {id} not found." });
-        }
 
         var eventName = existingEvent.Name;
 
@@ -197,9 +195,7 @@ public class EventModule : ICarterModule
     {
         var events = await db.Events.ToListAsync();
         if (events.Count == 0)
-        {
             return Results.NotFound(new { message = "No events found" });
-        }
 
         db.Events.RemoveRange(events);
         await db.SaveChangesAsync();
