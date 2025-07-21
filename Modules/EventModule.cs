@@ -6,6 +6,7 @@ using EventManagement.Models;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventManagement.Modules;
@@ -28,12 +29,13 @@ public class EventModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin,Manager")]
-    private static async Task<IResult> CreateEvent(CreateEventRequest request, IValidator<CreateEventRequest> validator,
+    private static async Task<IResult> CreateEvent(CreateEventRequest request,
+        IValidator<CreateEventRequest> eventValidator, IValidator<TicketRequest> ticketValidator,
         AppDbContext db, HttpContext http)
     {
-        var validation = await validator.ValidateAsync(request);
-        if (!validation.IsValid)
-            return Results.ValidationProblem(validation.ToDictionary());
+        var eventValidation = await eventValidator.ValidateAsync(request);
+        if (!eventValidation.IsValid)
+            return Results.ValidationProblem(eventValidation.ToDictionary());
 
         var userId = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId is null)
@@ -42,6 +44,14 @@ public class EventModule : ICarterModule
         var eventType = await db.EventTypes.FindAsync(request.EventTypeId);
         if (eventType is null)
             return Results.BadRequest(new { message = "Invalid Event Type ID." });
+
+        // Validate every ticket
+        foreach (var ticket in request.Tickets)
+        {
+            var ticketValidation = await ticketValidator.ValidateAsync(ticket);
+            if (!ticketValidation.IsValid)
+                return Results.ValidationProblem(ticketValidation.ToDictionary());
+        }
 
         var eventEntity = new Event()
         {
