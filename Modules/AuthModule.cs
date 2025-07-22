@@ -4,8 +4,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Carter;
 using EventManagement.Data;
-using EventManagement.DTOs;
 using EventManagement.Models;
+using EventManagement.Requests;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -202,9 +202,11 @@ public class AuthModule : ICarterModule
     {
         var jwt = config.GetSection("Jwt");
         var authKey = jwt["Key"];
-        var expiration = jwt["ExpiryMinutes"];
-
-        if (authKey == null || expiration == null) return null;
+        var expiration = jwt.GetValue<int>("ExpiryMinutes");
+        
+        if (authKey is null)
+            return null;
+        
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authKey));
         var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -218,7 +220,7 @@ public class AuthModule : ICarterModule
         var token = new JwtSecurityToken(
             issuer: jwt["Issuer"],
             audience: jwt["Audience"],
-            expires: DateTime.UtcNow.AddMinutes(double.Parse(expiration)),
+            expires: DateTime.UtcNow.AddMinutes(expiration),
             signingCredentials: signingCredentials,
             claims: claims
         );
@@ -227,11 +229,9 @@ public class AuthModule : ICarterModule
         return tokenString;
     }
 
-    private static string? GenerateRefreshToken()
+    private static string? GenerateRefreshToken(IConfiguration config)
     {
-        var refreshTokenSize = Environment.GetEnvironmentVariable("AUTH_REFRESH_TOKEN_SIZE");
-        if (refreshTokenSize is null || !int.TryParse(refreshTokenSize, out var size) || size <= 0)
-            return null;
+        var size = config.GetValue<int>("Jwt:RefreshTokenSize");
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(size));
     }
 
@@ -240,15 +240,12 @@ public class AuthModule : ICarterModule
         string email, List<string> roles, AppDbContext db)
     {
         var accessToken = GenerateToken(config, userId.ToString(), email, roles);
-        var refreshToken = GenerateRefreshToken();
+        var refreshToken = GenerateRefreshToken(config);
 
         if (accessToken is null || refreshToken is null)
             return (null, null);
-
-        var refreshTokenExpiryDays = Environment.GetEnvironmentVariable("AUTH_REFRESH_TOKEN_EXPIRE_DAYS");
-        if (refreshTokenExpiryDays is null || !int.TryParse(refreshTokenExpiryDays, out var expiryDays) ||
-            expiryDays <= 0)
-            return (null, null);
+        
+        var expiryDays = config.GetValue<int>("Jwt:RefreshTokenExpiryDays");
 
         db.RefreshTokens.Add(new RefreshToken
         {

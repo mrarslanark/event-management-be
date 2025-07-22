@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace EventManagement.DTOs;
+namespace EventManagement.Requests;
 
 public class TicketRequest
 {

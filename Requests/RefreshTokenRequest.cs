@@ -1,4 +1,4 @@
-namespace EventManagement.DTOs;
+namespace EventManagement.Requests;
 
 public class RefreshTokenRequest
 {

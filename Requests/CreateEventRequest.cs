@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 
-namespace EventManagement.DTOs;
+namespace EventManagement.Requests;
 
 public class CreateEventRequest
 {

@@ -1,4 +1,4 @@
-using EventManagement.DTOs;
+using EventManagement.Requests;
 using FluentValidation;
 
 namespace EventManagement.Validators;

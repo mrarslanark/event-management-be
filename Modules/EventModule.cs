@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using Carter;
 using EventManagement.Data;
-using EventManagement.DTOs;
 using EventManagement.Models;
+using EventManagement.Requests;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
