@@ -3,6 +3,8 @@ using Carter;
 using EventManagement.Data;
 using EventManagement.Models;
 using EventManagement.Requests;
+using EventManagement.Requests.Event;
+using EventManagement.Requests.Ticket;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +30,7 @@ public class EventModule : ICarterModule
 
     [Authorize(Roles = "Admin,Manager")]
     private static async Task<IResult> CreateEvent(CreateEventRequest request,
-        IValidator<CreateEventRequest> eventValidator, IValidator<TicketRequest> ticketValidator,
+        IValidator<CreateEventRequest> eventValidator, IValidator<CreateTicketRequest> ticketValidator,
         AppDbContext db, HttpContext http)
     {
         var eventValidation = await eventValidator.ValidateAsync(request);

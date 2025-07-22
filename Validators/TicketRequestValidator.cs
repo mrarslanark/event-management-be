@@ -1,9 +1,10 @@
 using EventManagement.Requests;
+using EventManagement.Requests.Ticket;
 using FluentValidation;
 
 namespace EventManagement.Validators;
 
-public class TicketRequestValidator : AbstractValidator<TicketRequest>
+public class TicketRequestValidator : AbstractValidator<CreateTicketRequest>
 {
     public TicketRequestValidator()
     {

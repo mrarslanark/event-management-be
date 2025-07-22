@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using EventManagement.Requests.Ticket;
 
-namespace EventManagement.Requests;
+namespace EventManagement.Requests.Event;
 
 public class CreateEventRequest
 {
@@ -16,7 +17,7 @@ public class CreateEventRequest
     public string Description { get; set; } = string.Empty;
     public Guid EventTypeId { get; set; }
 
-    public List<TicketRequest> Tickets { get; set; } = new();
+    public List<CreateTicketRequest> Tickets { get; set; } = new();
 
     public bool IsPublished { get; set; } = false;
     public string? BannerUrl { get; set; } = string.Empty;

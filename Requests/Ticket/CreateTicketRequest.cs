@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace EventManagement.Requests;
+namespace EventManagement.Requests.Ticket;
 
-public class TicketRequest
+public class CreateTicketRequest
 {
     [MaxLength(255)]
     public string Name { get; set; } = string.Empty;

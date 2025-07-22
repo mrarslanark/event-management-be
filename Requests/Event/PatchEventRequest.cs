@@ -1,4 +1,6 @@
-namespace EventManagement.Requests;
+using EventManagement.Requests.Ticket;
+
+namespace EventManagement.Requests.Event;
 
 public class PatchEventRequest
 {
@@ -16,5 +18,5 @@ public class PatchEventRequest
     public int? MaxAttendees { get; set; }
     public List<string>? Tags { get; set; }
 
-    public List<TicketRequest>? Tickets { get; set; }
+    public List<CreateTicketRequest>? Tickets { get; set; }
 }
