@@ -1,6 +1,9 @@
-namespace EventManagement.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
-public class User
+namespace EventManagement.Models.User;
+
+[Table("Users")]
+public class UserModel
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     
@@ -14,5 +17,5 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
-    public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public ICollection<UserRoleModel> UserRoles { get; set; } = new List<UserRoleModel>();
 }

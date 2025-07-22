@@ -77,6 +77,7 @@ namespace EventManagement.Migrations
                     Description = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     EventTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    EventTypeModelId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     CreatedByUserId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     IsPublished = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     BannerUrl = table.Column<string>(type: "longtext", nullable: true)
@@ -91,8 +92,8 @@ namespace EventManagement.Migrations
                 {
                     table.PrimaryKey("PK_Events", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Events_EventTypes_EventTypeId",
-                        column: x => x.EventTypeId,
+                        name: "FK_Events_EventTypes_EventTypeModelId",
+                        column: x => x.EventTypeModelId,
                         principalTable: "EventTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -164,14 +165,15 @@ namespace EventManagement.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Price = table.Column<float>(type: "float", nullable: false),
                     Count = table.Column<int>(type: "int", nullable: false),
-                    EventId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
+                    EventId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    EventModelId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tickets", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Tickets_Events_EventId",
-                        column: x => x.EventId,
+                        name: "FK_Tickets_Events_EventModelId",
+                        column: x => x.EventModelId,
                         principalTable: "Events",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -184,9 +186,9 @@ namespace EventManagement.Migrations
                 column: "CreatedByUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_EventTypeId",
+                name: "IX_Events_EventTypeModelId",
                 table: "Events",
-                column: "EventTypeId");
+                column: "EventTypeModelId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_Token",
@@ -200,9 +202,9 @@ namespace EventManagement.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tickets_EventId",
+                name: "IX_Tickets_EventModelId",
                 table: "Tickets",
-                column: "EventId");
+                column: "EventModelId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_RoleId",

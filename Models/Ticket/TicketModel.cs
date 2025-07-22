@@ -1,6 +1,10 @@
-namespace EventManagement.Models;
+using System.ComponentModel.DataAnnotations.Schema;
+using EventManagement.Models.Event;
 
-public class Ticket
+namespace EventManagement.Models.Ticket;
+
+[Table("Tickets")]
+public class TicketModel
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;       // e.g. VIP, Regular
@@ -9,5 +13,5 @@ public class Ticket
     public int Count { get; set; }
 
     public Guid EventId { get; set; }
-    public Event Event { get; set; } = default!;
+    public EventModel EventModel { get; set; } = default!;
 }

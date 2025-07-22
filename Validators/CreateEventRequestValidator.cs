@@ -27,7 +27,7 @@ public class CreateEventRequestValidator : AbstractValidator<CreateEventRequest>
             .MaximumLength(3_000).WithMessage("Description must not exceed 3,000 characters.");
         
         RuleFor(x => x.EventTypeId)
-            .NotEmpty().WithMessage("Event Type ID is required.");
+            .NotEmpty().WithMessage("EventModel Type ID is required.");
 
         RuleFor(x => x.Tickets)
             .NotEmpty().WithMessage("Tickets are required.");

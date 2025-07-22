@@ -1,6 +1,7 @@
 using Carter;
 using EventManagement.Data;
 using EventManagement.Models;
+using EventManagement.Models.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ public class UserModule : ICarterModule
     private static async Task<IResult> CreateAdminUser(
         RegisterRequest request,
         AppDbContext db,
-        IPasswordHasher<User> hasher,
+        IPasswordHasher<UserModel> hasher,
         IConfiguration config,
         HttpContext http)
     {
@@ -32,7 +33,7 @@ public class UserModule : ICarterModule
         if (existingUser is not null)
             return Results.Conflict(new { message = "Email already exists" });
 
-        var newUser = new User
+        var newUser = new UserModel
         {
             Email = request.Email,
             PasswordHash = hasher.HashPassword(null!, request.Password),
@@ -41,15 +42,15 @@ public class UserModule : ICarterModule
         await db.SaveChangesAsync();
 
         var adminRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-        var userRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+        var userRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "UserModel");
 
         if (adminRole is null || userRole is null)
             return Results.BadRequest(new { message = "Required roles are missing in the database." });
 
-        db.UserRoles.AddRange(new UserRole { UserId = newUser.Id, RoleId = adminRole.Id }, new UserRole { UserId = newUser.Id, RoleId = userRole.Id });
+        db.UserRoles.AddRange(new UserRoleModel { UserId = newUser.Id, RoleId = adminRole.Id }, new UserRoleModel { UserId = newUser.Id, RoleId = userRole.Id });
         await db.SaveChangesAsync();
             
-        var tokenString = AuthModule.GenerateToken(config, newUser.Id.ToString(), newUser.Email, ["Admin", "User"]);
+        var tokenString = AuthModule.GenerateToken(config, newUser.Id.ToString(), newUser.Email, ["Admin", "UserModel"]);
         return Results.Created($"/users/{newUser.Id}", new
         {
             token = tokenString,

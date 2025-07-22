@@ -1,6 +1,11 @@
-namespace EventManagement.Models;
+using System.ComponentModel.DataAnnotations.Schema;
+using EventManagement.Models.Ticket;
+using EventManagement.Models.User;
 
-public class Event
+namespace EventManagement.Models.Event;
+
+[Table("Events")]
+public class EventModel
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
@@ -12,16 +17,16 @@ public class Event
 
     public string Description { get; set; } = string.Empty;
 
-    // 🆕 Event Type (Genre)
+    // 🆕 EventModel Type (Genre)
     public Guid EventTypeId { get; set; }
-    public EventType EventType { get; set; } = default!;
+    public EventTypeModel EventTypeModel { get; set; } = default!;
 
     // 🆕 Tickets (1:N)
-    public List<Ticket> Tickets { get; set; } = new();
+    public List<TicketModel> Tickets { get; set; } = new();
 
     // 🆕 Optional Fields
     public Guid CreatedByUserId { get; set; }
-    public User CreatedByUser { get; set; } = default!;
+    public UserModel CreatedByUserModel { get; set; } = default!;
 
     public bool IsPublished { get; set; }
 

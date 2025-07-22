@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250722221711_InitialCreate")]
+    [Migration("20250722225520_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -25,7 +25,7 @@ namespace EventManagement.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("EventManagement.Models.Event", b =>
+            modelBuilder.Entity("EventManagement.Models.Event.EventModel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -48,6 +48,9 @@ namespace EventManagement.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<Guid>("EventTypeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("EventTypeModelId")
                         .HasColumnType("char(36)");
 
                     b.Property<bool>("IsPublished")
@@ -78,12 +81,12 @@ namespace EventManagement.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("EventTypeId");
+                    b.HasIndex("EventTypeModelId");
 
                     b.ToTable("Events");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.EventType", b =>
+            modelBuilder.Entity("EventManagement.Models.Event.EventTypeModel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -98,7 +101,7 @@ namespace EventManagement.Migrations
                     b.ToTable("EventTypes");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.RefreshToken", b =>
+            modelBuilder.Entity("EventManagement.Models.RefreshTokenModel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -127,22 +130,7 @@ namespace EventManagement.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.Role", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Roles");
-                });
-
-            modelBuilder.Entity("EventManagement.Models.Ticket", b =>
+            modelBuilder.Entity("EventManagement.Models.Ticket.TicketModel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -158,6 +146,9 @@ namespace EventManagement.Migrations
                     b.Property<Guid>("EventId")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid>("EventModelId")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -167,12 +158,27 @@ namespace EventManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EventId");
+                    b.HasIndex("EventModelId");
 
                     b.ToTable("Tickets");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.User", b =>
+            modelBuilder.Entity("EventManagement.Models.User.RoleModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("EventManagement.Models.User.UserModel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -203,7 +209,7 @@ namespace EventManagement.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("UserRole", b =>
+            modelBuilder.Entity("EventManagement.Models.User.UserRoleModel", b =>
                 {
                     b.Property<Guid>("UserId")
                         .HasColumnType("char(36)");
@@ -218,28 +224,28 @@ namespace EventManagement.Migrations
                     b.ToTable("UserRoles");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.Event", b =>
+            modelBuilder.Entity("EventManagement.Models.Event.EventModel", b =>
                 {
-                    b.HasOne("EventManagement.Models.User", "CreatedByUser")
+                    b.HasOne("EventManagement.Models.User.UserModel", "CreatedByUserModel")
                         .WithMany()
                         .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("EventManagement.Models.EventType", "EventType")
+                    b.HasOne("EventManagement.Models.Event.EventTypeModel", "EventTypeModel")
                         .WithMany("Events")
-                        .HasForeignKey("EventTypeId")
+                        .HasForeignKey("EventTypeModelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("CreatedByUser");
+                    b.Navigation("CreatedByUserModel");
 
-                    b.Navigation("EventType");
+                    b.Navigation("EventTypeModel");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.RefreshToken", b =>
+            modelBuilder.Entity("EventManagement.Models.RefreshTokenModel", b =>
                 {
-                    b.HasOne("EventManagement.Models.User", "User")
+                    b.HasOne("EventManagement.Models.User.UserModel", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -248,52 +254,52 @@ namespace EventManagement.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.Ticket", b =>
+            modelBuilder.Entity("EventManagement.Models.Ticket.TicketModel", b =>
                 {
-                    b.HasOne("EventManagement.Models.Event", "Event")
+                    b.HasOne("EventManagement.Models.Event.EventModel", "EventModel")
                         .WithMany("Tickets")
-                        .HasForeignKey("EventId")
+                        .HasForeignKey("EventModelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Event");
+                    b.Navigation("EventModel");
                 });
 
-            modelBuilder.Entity("UserRole", b =>
+            modelBuilder.Entity("EventManagement.Models.User.UserRoleModel", b =>
                 {
-                    b.HasOne("EventManagement.Models.Role", "Role")
+                    b.HasOne("EventManagement.Models.User.RoleModel", "RoleModel")
                         .WithMany("UserRoles")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EventManagement.Models.User", "User")
+                    b.HasOne("EventManagement.Models.User.UserModel", "UserModel")
                         .WithMany("UserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Role");
+                    b.Navigation("RoleModel");
 
-                    b.Navigation("User");
+                    b.Navigation("UserModel");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.Event", b =>
+            modelBuilder.Entity("EventManagement.Models.Event.EventModel", b =>
                 {
                     b.Navigation("Tickets");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.EventType", b =>
+            modelBuilder.Entity("EventManagement.Models.Event.EventTypeModel", b =>
                 {
                     b.Navigation("Events");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.Role", b =>
+            modelBuilder.Entity("EventManagement.Models.User.RoleModel", b =>
                 {
                     b.Navigation("UserRoles");
                 });
 
-            modelBuilder.Entity("EventManagement.Models.User", b =>
+            modelBuilder.Entity("EventManagement.Models.User.UserModel", b =>
                 {
                     b.Navigation("UserRoles");
                 });

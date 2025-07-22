@@ -5,6 +5,7 @@ using System.Text;
 using Carter;
 using EventManagement.Data;
 using EventManagement.Models;
+using EventManagement.Models.User;
 using EventManagement.Requests;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
@@ -29,7 +30,7 @@ public class AuthModule : ICarterModule
         UserLoginRequest request,
         IValidator<UserLoginRequest> validator,
         AppDbContext db, 
-        IPasswordHasher<User> hasher)
+        IPasswordHasher<UserModel> hasher)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -66,7 +67,7 @@ public class AuthModule : ICarterModule
         UserRegisterRequest request,
         IValidator<UserRegisterRequest> validator,
         AppDbContext db, 
-        IPasswordHasher<User> hasher)
+        IPasswordHasher<UserModel> hasher)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -74,11 +75,11 @@ public class AuthModule : ICarterModule
 
         var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (existingUser is not null)
-            return Results.Conflict(new { message = "User already exists, Login" });
+            return Results.Conflict(new { message = "UserModel already exists, Login" });
 
         var emailToken = Guid.NewGuid().ToString();
 
-        var user = new User
+        var user = new UserModel
         {
             Email = request.Email,
             PasswordHash = hasher.HashPassword(null!, request.Password),
@@ -94,11 +95,11 @@ public class AuthModule : ICarterModule
 
         Console.WriteLine($"Simulated verification token: {emailToken}");
 
-        var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+        var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "UserModel");
         if (role is null)
-            return Results.BadRequest(new { message = "Default role 'User' not found in database." });
+            return Results.BadRequest(new { message = "Default role 'UserModel' not found in database." });
 
-        db.UserRoles.Add(new UserRole
+        db.UserRoles.Add(new UserRoleModel
         {
             UserId = user.Id,
             RoleId = role.Id
@@ -189,8 +190,8 @@ public class AuthModule : ICarterModule
     {
         return await db.UserRoles
             .Where(userRole => userRole.UserId.ToString() == id)
-            .Include(ur => ur.Role)
-            .Select(ur => ur.Role.Name)
+            .Include(ur => ur.RoleModel)
+            .Select(ur => ur.RoleModel.Name)
             .ToListAsync();
     }
 
@@ -247,7 +248,7 @@ public class AuthModule : ICarterModule
         
         var expiryDays = config.GetValue<int>("Jwt:RefreshTokenExpiryDays");
 
-        db.RefreshTokens.Add(new RefreshToken
+        db.RefreshTokens.Add(new RefreshTokenModel
         {
             Token = refreshToken,
             UserId = userId,

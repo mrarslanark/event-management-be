@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Carter;
 using EventManagement.Data;
 using EventManagement.Models;
+using EventManagement.Models.Event;
+using EventManagement.Models.Ticket;
 using EventManagement.Requests;
 using EventManagement.Requests.Event;
 using EventManagement.Requests.Ticket;
@@ -43,7 +45,7 @@ public class EventModule : ICarterModule
 
         var eventType = await db.EventTypes.FindAsync(request.EventTypeId);
         if (eventType is null)
-            return Results.BadRequest(new { message = "Invalid Event Type ID." });
+            return Results.BadRequest(new { message = "Invalid EventModel Type ID." });
 
         // Validate every ticket
         foreach (var ticket in request.Tickets)
@@ -53,7 +55,7 @@ public class EventModule : ICarterModule
                 return Results.ValidationProblem(ticketValidation.ToDictionary());
         }
 
-        var eventEntity = new Event()
+        var eventEntity = new EventModel()
         {
             Name = request.Name,
             Location = request.Location,
@@ -68,7 +70,7 @@ public class EventModule : ICarterModule
             CreatedByUserId = Guid.Parse(userId),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            Tickets = request.Tickets.Select(t => new Ticket
+            Tickets = request.Tickets.Select(t => new TicketModel
             {
                 Name = t.Name,
                 Description = t.Description,
@@ -95,7 +97,7 @@ public class EventModule : ICarterModule
             CreatedByUserId = Guid.Parse(userId).ToString(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            Tickets = request.Tickets.Select(t => new Ticket
+            Tickets = request.Tickets.Select(t => new TicketModel
             {
                 Name = t.Name,
                 Description = t.Description,
@@ -120,11 +122,11 @@ public class EventModule : ICarterModule
 
         var eventEntity = await db.Events
             .Include(e => e.Tickets)
-            .Include(e => e.EventType)
-            .Include(e => e.CreatedByUser)
+            .Include(e => e.EventTypeModel)
+            .Include(e => e.CreatedByUserModel)
             .FirstOrDefaultAsync(e => e.Id == id);
         if (eventEntity is null)
-            return Results.NotFound(new { message = "Event not found." });
+            return Results.NotFound(new { message = "EventModel not found." });
 
         if (!http.User.IsInRole("Admin") && eventEntity.CreatedByUserId.ToString() != userId)
             return Results.Forbid();
@@ -143,7 +145,7 @@ public class EventModule : ICarterModule
         if (request.Tickets is not null)
         {
             db.Tickets.RemoveRange(eventEntity.Tickets);
-            eventEntity.Tickets = request.Tickets.Select(t => new Ticket
+            eventEntity.Tickets = request.Tickets.Select(t => new TicketModel
             {
                 Name = t.Name,
                 Description = t.Description,
@@ -168,8 +170,8 @@ public class EventModule : ICarterModule
             eventEntity.BannerUrl,
             eventEntity.MaxAttendees,
             eventEntity.Tags,
-            eventType = eventEntity.EventType.Name,
-            createdBy = eventEntity.CreatedByUser.Email,
+            eventType = eventEntity.EventTypeModel.Name,
+            createdBy = eventEntity.CreatedByUserModel.Email,
             tickets = eventEntity.Tickets.Select(t => new
             {
                 t.Id,
@@ -187,7 +189,7 @@ public class EventModule : ICarterModule
     {
         var existingEvent = await db.Events.FindAsync(id);
         if (existingEvent is null)
-            return Results.NotFound(new { message = $"Event with ID {id} not found." });
+            return Results.NotFound(new { message = $"EventModel with ID {id} not found." });
 
         var eventName = existingEvent.Name;
 
