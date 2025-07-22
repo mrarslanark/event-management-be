@@ -4,12 +4,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Carter;
-using DotNetEnv;
 using EventManagement.Models;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-
-Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCarter();
