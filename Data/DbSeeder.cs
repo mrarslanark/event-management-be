@@ -12,7 +12,7 @@ public static class DbSeeder
         // Add Roles to Database
         await AddRoles(db);
 
-        // Add EventModel Types to Database
+        // Add Event Types to Database
         await AddEventTypes(db);
         
         // Add first admin
@@ -21,7 +21,7 @@ public static class DbSeeder
 
     private static async Task AddRoles(AppDbContext db)
     {
-        var roles = new[] { "Admin", "Manager", "UserModel" };
+        var roles = new[] { "Admin", "Manager", "User" };
         foreach (var roleName in roles)
         {
             if (!await db.Roles.AnyAsync(r => r.Name == roleName))
@@ -46,7 +46,7 @@ public static class DbSeeder
         }
         
         await db.SaveChangesAsync();
-        Console.WriteLine($"✅ Seeded EventModel Types: {string.Join(", ", eventTypes)}");
+        Console.WriteLine($"✅ Seeded Event Types: {string.Join(", ", eventTypes)}");
     }
 
     private static async Task AddFirstAdmin(IConfiguration config, AppDbContext db, IPasswordHasher<UserModel> hasher)
@@ -77,7 +77,7 @@ public static class DbSeeder
             var userRoles = await db.Roles.ToListAsync();
 
             var adminRole = userRoles.FirstOrDefault(r => r.Name == "Admin");
-            var userRole = userRoles.FirstOrDefault(r => r.Name == "UserModel");
+            var userRole = userRoles.FirstOrDefault(r => r.Name == "User");
 
             if (adminRole is null || userRole is null)
                 throw new Exception("Required roles not found in DB. Please seed roles first.");

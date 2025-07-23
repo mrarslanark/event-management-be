@@ -75,7 +75,7 @@ public class AuthModule : ICarterModule
 
         var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (existingUser is not null)
-            return Results.Conflict(new { message = "UserModel already exists, Login" });
+            return Results.Conflict(new { message = "User already exists, Login" });
 
         var emailToken = Guid.NewGuid().ToString();
 
@@ -95,9 +95,9 @@ public class AuthModule : ICarterModule
 
         Console.WriteLine($"Simulated verification token: {emailToken}");
 
-        var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "UserModel");
+        var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
         if (role is null)
-            return Results.BadRequest(new { message = "Default role 'UserModel' not found in database." });
+            return Results.BadRequest(new { message = "Default role 'User' not found in database." });
 
         db.UserRoles.Add(new UserRoleModel
         {

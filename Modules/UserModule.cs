@@ -41,7 +41,7 @@ public class UserModule : ICarterModule
         await db.SaveChangesAsync();
 
         var adminRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-        var userRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "UserModel");
+        var userRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
 
         if (adminRole is null || userRole is null)
             return Results.BadRequest(new { message = "Required roles are missing in the database." });
@@ -49,7 +49,7 @@ public class UserModule : ICarterModule
         db.UserRoles.AddRange(new UserRoleModel { UserId = newUser.Id, RoleId = adminRole.Id }, new UserRoleModel { UserId = newUser.Id, RoleId = userRole.Id });
         await db.SaveChangesAsync();
             
-        var tokenString = AuthModule.GenerateToken(config, newUser.Id.ToString(), newUser.Email, ["Admin", "UserModel"]);
+        var tokenString = AuthModule.GenerateToken(config, newUser.Id.ToString(), newUser.Email, ["Admin", "User"]);
         return Results.Created($"/users/{newUser.Id}", new
         {
             token = tokenString,

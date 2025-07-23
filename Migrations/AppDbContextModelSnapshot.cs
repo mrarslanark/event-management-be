@@ -22,6 +22,35 @@ namespace EventManagement.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("EventManagement.Models.Auth.RefreshTokenModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("EventManagement.Models.Event.EventModel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -96,35 +125,6 @@ namespace EventManagement.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("EventTypes");
-                });
-
-            modelBuilder.Entity("EventManagement.Models.RefreshTokenModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("IsRevoked")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("EventManagement.Models.Ticket.TicketModel", b =>
@@ -221,6 +221,17 @@ namespace EventManagement.Migrations
                     b.ToTable("UserRoles");
                 });
 
+            modelBuilder.Entity("EventManagement.Models.Auth.RefreshTokenModel", b =>
+                {
+                    b.HasOne("EventManagement.Models.User.UserModel", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EventManagement.Models.Event.EventModel", b =>
                 {
                     b.HasOne("EventManagement.Models.User.UserModel", "CreatedByUserModel")
@@ -238,17 +249,6 @@ namespace EventManagement.Migrations
                     b.Navigation("CreatedByUserModel");
 
                     b.Navigation("EventTypeModel");
-                });
-
-            modelBuilder.Entity("EventManagement.Models.RefreshTokenModel", b =>
-                {
-                    b.HasOne("EventManagement.Models.User.UserModel", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("EventManagement.Models.Ticket.TicketModel", b =>

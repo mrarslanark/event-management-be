@@ -43,7 +43,7 @@ public class EventModule : ICarterModule
 
         var eventType = await db.EventTypes.FindAsync(request.EventTypeId);
         if (eventType is null)
-            return Results.BadRequest(new { message = "Invalid EventModel Type ID." });
+            return Results.BadRequest(new { message = "Invalid Event Type ID." });
 
         // Validate every ticket
         foreach (var ticket in request.Tickets)
@@ -124,7 +124,7 @@ public class EventModule : ICarterModule
             .Include(e => e.CreatedByUserModel)
             .FirstOrDefaultAsync(e => e.Id == id);
         if (eventEntity is null)
-            return Results.NotFound(new { message = "EventModel not found." });
+            return Results.NotFound(new { message = "Event not found." });
 
         if (!http.User.IsInRole("Admin") && eventEntity.CreatedByUserId.ToString() != userId)
             return Results.Forbid();
@@ -187,7 +187,7 @@ public class EventModule : ICarterModule
     {
         var existingEvent = await db.Events.FindAsync(id);
         if (existingEvent is null)
-            return Results.NotFound(new { message = $"EventModel with ID {id} not found." });
+            return Results.NotFound(new { message = $"Event with ID {id} not found." });
 
         var eventName = existingEvent.Name;
 

@@ -21,7 +21,7 @@ public class KycModule : ICarterModule
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user is null)
-            return Results.NotFound(new { message = "UserModel not found." });
+            return Results.NotFound(new { message = "User not found." });
 
         var managerRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "Manager");
         if (managerRole is null)
@@ -29,7 +29,7 @@ public class KycModule : ICarterModule
 
         var alreadyManager = user.UserRoles.Any(ur => ur.RoleId == managerRole.Id);
         if (alreadyManager)
-            return Results.Ok(new { message = $"UserModel {user.Email} already has 'Manager' role." });
+            return Results.Ok(new { message = $"User {user.Email} already has 'Manager' role." });
 
         user.UserRoles.Add(new UserRoleModel
         {
@@ -38,6 +38,6 @@ public class KycModule : ICarterModule
         });
 
         await db.SaveChangesAsync();
-        return Results.Ok(new { message = $"UserModel {user.Email} has been promoted to 'Manager'." });
+        return Results.Ok(new { message = $"User {user.Email} has been promoted to 'Manager'." });
     }
 }
