@@ -1,6 +1,5 @@
 using Carter;
 using EventManagement.Data;
-using EventManagement.Models;
 using EventManagement.Models.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;

@@ -1,10 +1,8 @@
 using System.Security.Claims;
 using Carter;
 using EventManagement.Data;
-using EventManagement.Models;
 using EventManagement.Models.Event;
 using EventManagement.Models.Ticket;
-using EventManagement.Requests;
 using EventManagement.Requests.Event;
 using EventManagement.Requests.Ticket;
 using FluentValidation;

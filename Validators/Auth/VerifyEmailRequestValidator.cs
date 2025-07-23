@@ -1,7 +1,7 @@
 using EventManagement.Requests;
 using FluentValidation;
 
-namespace EventManagement.Validators;
+namespace EventManagement.Validators.Auth;
 
 public class VerifyEmailRequestValidator : AbstractValidator<VerifyEmailRequest>
 {

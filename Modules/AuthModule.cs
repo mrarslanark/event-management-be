@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Carter;
 using EventManagement.Data;
-using EventManagement.Models;
+using EventManagement.Models.Auth;
 using EventManagement.Models.User;
 using EventManagement.Requests;
 using FluentValidation;

@@ -1,8 +1,7 @@
-using EventManagement.Requests;
 using EventManagement.Requests.Event;
 using FluentValidation;
 
-namespace EventManagement.Validators;
+namespace EventManagement.Validators.Event;
 
 public class PatchEventRequestValidator : AbstractValidator<PatchEventRequest>
 {

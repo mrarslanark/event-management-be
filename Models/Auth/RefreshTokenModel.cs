@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using EventManagement.Models.User;
 
-namespace EventManagement.Models;
+namespace EventManagement.Models.Auth;
 
 [Table("RefreshTokens")]
 public class RefreshTokenModel
