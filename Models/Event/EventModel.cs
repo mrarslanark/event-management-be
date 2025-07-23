@@ -17,7 +17,7 @@ public class EventModel
 
     public string Description { get; set; } = string.Empty;
 
-    // 🆕 EventModel Type (Genre)
+    // 🆕 Event Type (Genre)
     public Guid EventTypeId { get; set; }
     public EventTypeModel EventTypeModel { get; set; } = default!;
 
@@ -34,7 +34,7 @@ public class EventModel
 
     public int? MaxAttendees { get; set; }  // Optional limit
 
-    public List<string> Tags { get; set; } = new(); // stored as JSON
+    public List<string> Tags { get; set; } = []; // stored as JSON
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
