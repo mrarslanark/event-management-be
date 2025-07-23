@@ -1,4 +1,5 @@
-using EventManagement.Models;
+using EventManagement.Models.Event;
+using EventManagement.Models.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,7 +7,7 @@ namespace EventManagement.Data;
 
 public static class DbSeeder
 {
-    public static async Task Seed(IConfiguration config, AppDbContext db, IPasswordHasher<User> hasher)
+    public static async Task Seed(IConfiguration config, AppDbContext db, IPasswordHasher<UserModel> hasher)
     {
         // Add Roles to Database
         await AddRoles(db);
@@ -25,7 +26,7 @@ public static class DbSeeder
         {
             if (!await db.Roles.AnyAsync(r => r.Name == roleName))
             {
-                db.Roles.Add(new Role() { Name = roleName });
+                db.Roles.Add(new RoleModel() { Name = roleName });
             }
         }
 
@@ -40,7 +41,7 @@ public static class DbSeeder
         {
             if (!await db.EventTypes.AnyAsync(et => et.Name == name))
             {
-                db.EventTypes.Add(new EventType { Name = name });
+                db.EventTypes.Add(new EventTypeModel { Name = name });
             }
         }
         
@@ -48,7 +49,7 @@ public static class DbSeeder
         Console.WriteLine($"✅ Seeded Event Types: {string.Join(", ", eventTypes)}");
     }
 
-    private static async Task AddFirstAdmin(IConfiguration config, AppDbContext db, IPasswordHasher<User> hasher)
+    private static async Task AddFirstAdmin(IConfiguration config, AppDbContext db, IPasswordHasher<UserModel> hasher)
     {
         var admin = config.GetSection("Admin");
         var email = admin["Email"];
@@ -59,12 +60,12 @@ public static class DbSeeder
 
         var existingAdmin = await db.Users
             .Include(u => u.UserRoles)
-            .ThenInclude(ur => ur.Role)
+            .ThenInclude(ur => ur.RoleModel)
             .FirstOrDefaultAsync(u => u.Email == email);
         
         if (existingAdmin == null)
         {
-            var adminUser = new User
+            var adminUser = new UserModel
             {
                 Email = email,
                 PasswordHash = hasher.HashPassword(null!, password)
@@ -81,8 +82,8 @@ public static class DbSeeder
             if (adminRole is null || userRole is null)
                 throw new Exception("Required roles not found in DB. Please seed roles first.");
 
-            db.UserRoles.AddRange(new UserRole { UserId = adminUser.Id, RoleId = adminRole.Id },
-                new UserRole { UserId = adminUser.Id, RoleId = userRole.Id });
+            db.UserRoles.AddRange(new UserRoleModel { UserId = adminUser.Id, RoleId = adminRole.Id },
+                new UserRoleModel { UserId = adminUser.Id, RoleId = userRole.Id });
             await db.SaveChangesAsync();
             Console.WriteLine($"✅ Seeded first Admin: {email}");
         }

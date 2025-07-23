@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using Carter;
 using EventManagement.Data;
-using EventManagement.DTOs;
-using EventManagement.Models;
+using EventManagement.Models.Event;
+using EventManagement.Models.Ticket;
+using EventManagement.Requests.Event;
+using EventManagement.Requests.Ticket;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +30,7 @@ public class EventModule : ICarterModule
 
     [Authorize(Roles = "Admin,Manager")]
     private static async Task<IResult> CreateEvent(CreateEventRequest request,
-        IValidator<CreateEventRequest> eventValidator, IValidator<TicketRequest> ticketValidator,
+        IValidator<CreateEventRequest> eventValidator, IValidator<CreateTicketRequest> ticketValidator,
         AppDbContext db, HttpContext http)
     {
         var eventValidation = await eventValidator.ValidateAsync(request);
@@ -51,7 +53,7 @@ public class EventModule : ICarterModule
                 return Results.ValidationProblem(ticketValidation.ToDictionary());
         }
 
-        var eventEntity = new Event()
+        var eventEntity = new EventModel()
         {
             Name = request.Name,
             Location = request.Location,
@@ -66,7 +68,7 @@ public class EventModule : ICarterModule
             CreatedByUserId = Guid.Parse(userId),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            Tickets = request.Tickets.Select(t => new Ticket
+            Tickets = request.Tickets.Select(t => new TicketModel
             {
                 Name = t.Name,
                 Description = t.Description,
@@ -93,7 +95,7 @@ public class EventModule : ICarterModule
             CreatedByUserId = Guid.Parse(userId).ToString(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            Tickets = request.Tickets.Select(t => new Ticket
+            Tickets = request.Tickets.Select(t => new TicketModel
             {
                 Name = t.Name,
                 Description = t.Description,
@@ -118,8 +120,8 @@ public class EventModule : ICarterModule
 
         var eventEntity = await db.Events
             .Include(e => e.Tickets)
-            .Include(e => e.EventType)
-            .Include(e => e.CreatedByUser)
+            .Include(e => e.EventTypeModel)
+            .Include(e => e.CreatedByUserModel)
             .FirstOrDefaultAsync(e => e.Id == id);
         if (eventEntity is null)
             return Results.NotFound(new { message = "Event not found." });
@@ -141,7 +143,7 @@ public class EventModule : ICarterModule
         if (request.Tickets is not null)
         {
             db.Tickets.RemoveRange(eventEntity.Tickets);
-            eventEntity.Tickets = request.Tickets.Select(t => new Ticket
+            eventEntity.Tickets = request.Tickets.Select(t => new TicketModel
             {
                 Name = t.Name,
                 Description = t.Description,
@@ -166,8 +168,8 @@ public class EventModule : ICarterModule
             eventEntity.BannerUrl,
             eventEntity.MaxAttendees,
             eventEntity.Tags,
-            eventType = eventEntity.EventType.Name,
-            createdBy = eventEntity.CreatedByUser.Email,
+            eventType = eventEntity.EventTypeModel.Name,
+            createdBy = eventEntity.CreatedByUserModel.Email,
             tickets = eventEntity.Tickets.Select(t => new
             {
                 t.Id,

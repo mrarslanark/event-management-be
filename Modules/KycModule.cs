@@ -1,5 +1,6 @@
 using Carter;
 using EventManagement.Data;
+using EventManagement.Models.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,7 +31,7 @@ public class KycModule : ICarterModule
         if (alreadyManager)
             return Results.Ok(new { message = $"User {user.Email} already has 'Manager' role." });
 
-        user.UserRoles.Add(new UserRole
+        user.UserRoles.Add(new UserRoleModel
         {
             UserId = user.Id,
             RoleId = managerRole.Id
