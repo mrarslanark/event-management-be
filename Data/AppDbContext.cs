@@ -1,5 +1,4 @@
 using System.Text.Json;
-using EventManagement.Models;
 using EventManagement.Models.Auth;
 using EventManagement.Models.Event;
 using EventManagement.Models.Ticket;

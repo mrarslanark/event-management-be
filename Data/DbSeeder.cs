@@ -1,4 +1,3 @@
-using EventManagement.Models;
 using EventManagement.Models.Event;
 using EventManagement.Models.User;
 using Microsoft.AspNetCore.Identity;
