@@ -60,7 +60,7 @@ public class EventModule : ICarterModule
             StartTime = request.StartTime,
             EndTime = request.EndTime,
             Description = request.Description,
-            EventTypeId = request.EventTypeId,
+            EventTypeModelId = request.EventTypeId,
             IsPublished = request.IsPublished,
             BannerUrl = request.BannerUrl,
             MaxAttendees = request.MaxAttendees,
@@ -134,7 +134,7 @@ public class EventModule : ICarterModule
         if (request.StartTime.HasValue) eventEntity.StartTime = request.StartTime.Value;
         if (request.EndTime.HasValue) eventEntity.EndTime = request.EndTime.Value;
         if (request.Description is not null) eventEntity.Description = request.Description;
-        if (request.EventTypeId.HasValue) eventEntity.EventTypeId = request.EventTypeId.Value;
+        if (request.EventTypeId.HasValue) eventEntity.EventTypeModelId = request.EventTypeId.Value;
         if (request.IsPublished.HasValue) eventEntity.IsPublished = request.IsPublished.Value;
         if (request.BannerUrl is not null) eventEntity.BannerUrl = request.BannerUrl;
         if (request.MaxAttendees.HasValue) eventEntity.MaxAttendees = request.MaxAttendees;

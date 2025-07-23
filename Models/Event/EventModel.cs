@@ -18,7 +18,7 @@ public class EventModel
     public string Description { get; set; } = string.Empty;
 
     // 🆕 Event Type (Genre)
-    public Guid EventTypeId { get; set; }
+    public Guid EventTypeModelId { get; set; }
     public EventTypeModel EventTypeModel { get; set; } = default!;
 
     // 🆕 Tickets (1:N)
