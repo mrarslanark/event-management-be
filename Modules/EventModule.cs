@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Carter;
 using EventManagement.Data;
+using EventManagement.Helpers;
 using EventManagement.Models.Event;
 using EventManagement.Models.Ticket;
 using EventManagement.Requests.Event;
@@ -25,7 +26,7 @@ public class EventModule : ICarterModule
     private static async Task<IResult> GetAllEvents(AppDbContext db)
     {
         var events = await db.Events.ToListAsync();
-        return Results.Ok(events);
+        return ApiResponse.Success(events);
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -79,7 +80,7 @@ public class EventModule : ICarterModule
         db.Events.Add(eventEntity);
         await db.SaveChangesAsync();
 
-        return Results.Created($"/events/{eventEntity.Id}", new
+        var data = new
         {
             id = eventEntity.Id,
             request.Name,
@@ -102,7 +103,8 @@ public class EventModule : ICarterModule
                 Price = t.Price,
                 Count = t.Count
             }).ToList()
-        });
+        };
+        return ApiResponse.Created($"/events/{eventEntity.Id}", data);
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -156,7 +158,7 @@ public class EventModule : ICarterModule
         eventEntity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        return Results.Ok(new
+        var data = new
         {
             eventEntity.Id,
             eventEntity.Name,
@@ -179,7 +181,8 @@ public class EventModule : ICarterModule
                 t.Count
             }),
             eventEntity.UpdatedAt
-        });
+        };
+        return ApiResponse.Success(data);
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -194,7 +197,7 @@ public class EventModule : ICarterModule
         db.Events.Remove(existingEvent);
         await db.SaveChangesAsync();
 
-        return Results.Ok(new { message = $"The {eventName} was deleted." });
+        return ApiResponse.Success(null, $"The {eventName} was deleted.");
     }
 
     [Authorize(Roles = "Admin")]
@@ -207,6 +210,6 @@ public class EventModule : ICarterModule
         db.Events.RemoveRange(events);
         await db.SaveChangesAsync();
 
-        return Results.Ok(new { message = $"All {events.Count} events have been deleted." });
+        return ApiResponse.Success(null, $"All {events.Count} events have been deleted.");
     }
 }
