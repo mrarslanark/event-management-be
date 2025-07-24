@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Carter;
 using EventManagement.Data;
+using EventManagement.Exceptions;
 using EventManagement.Models.Auth;
 using EventManagement.Models.User;
 using EventManagement.Requests;
@@ -34,22 +35,25 @@ public class AuthModule : ICarterModule
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
-            return Results.ValidationProblem(validation.ToDictionary());
+            throw new ValidationException(validation.Errors);
 
         // Find user from the database
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (user is null)
-            return Results.BadRequest(new { message = "Invalid Credentials" });
+            throw new ArgumentException("Invalid Credentials");
 
+        // Validate user password
         var result = hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (result is not PasswordVerificationResult.Success)
-            return Results.BadRequest(new { message = "Invalid Credentials" });
+            throw new UnauthorizedAccessException("Invalid Credentials");
 
+        // Get roles & generate access and refresh token
         var roles = await GetRoles(db, user.Id.ToString());
         var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, db);
         if (accessToken is null || refreshToken is null)
-            return Results.BadRequest(new { message = "Invalid Credentials" });
+            throw new UnauthorizedAccessException("Invalid Credentials");
 
+        
         return Results.Ok(new
         {
             uid = user.Id,
@@ -71,11 +75,11 @@ public class AuthModule : ICarterModule
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
-            return Results.ValidationProblem(validation.ToDictionary());
+            throw new ValidationException(validation.Errors);
 
         var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (existingUser is not null)
-            return Results.Conflict(new { message = "User already exists, Login" });
+            throw new ConflictException("User already exists, Login");
 
         var emailToken = Guid.NewGuid().ToString();
 
@@ -97,7 +101,7 @@ public class AuthModule : ICarterModule
 
         var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
         if (role is null)
-            return Results.BadRequest(new { message = "Default role 'User' not found in database." });
+            throw new Exception("Default role 'User' not found in database.");
 
         db.UserRoles.Add(new UserRoleModel
         {
@@ -110,7 +114,7 @@ public class AuthModule : ICarterModule
 
         var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, db);
         if (accessToken is null || refreshToken is null)
-            return Results.BadRequest(new { message = "Invalid Credentials" });
+            throw new UnauthorizedAccessException("Invalid Credentials");
 
         return Results.Created($"/users/{user.Id}", new
         {
@@ -130,11 +134,11 @@ public class AuthModule : ICarterModule
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
-            return Results.ValidationProblem(validation.ToDictionary());
+            throw new ValidationException(validation.Errors);
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == request.Token);
         if (user is null)
-            return Results.BadRequest(new { message = "Invalid or expired token." });
+            throw new ArgumentException("Invalid Credentials");
 
         if (user.isEmailVerified)
             return Results.Ok(new { message = "Email is already verified" });
@@ -156,17 +160,17 @@ public class AuthModule : ICarterModule
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
-            return Results.ValidationProblem(validation.ToDictionary());
+            throw new ValidationException(validation.Errors);
 
         var existingToken = await db.RefreshTokens
             .Include(rt => rt.User)
             .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken && !rt.IsRevoked);
         if (existingToken is null || existingToken.ExpiresAt < DateTime.UtcNow)
-            return Results.Unauthorized();
+            throw new UnauthorizedAccessException("Refresh token has expired");
 
         var user = existingToken.User;
         if (user is null)
-            return Results.BadRequest(new { message = "Invalid refresh token." });
+            throw new ArgumentException("Invalid refresh token.");
 
         var userId = user.Id.ToString();
 
@@ -177,7 +181,7 @@ public class AuthModule : ICarterModule
         var roles = await GetRoles(db, userId);
         var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, db);
         if (accessToken is null || refreshToken is null)
-            return Results.BadRequest(new { message = "Unable to refresh token." });
+            throw new ArgumentException("Unable to refresh token.");
 
         return Results.Ok(new
         {
