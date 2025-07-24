@@ -152,7 +152,7 @@ public class AuthModule : ICarterModule
 
         await db.SaveChangesAsync();
 
-        return ApiResponse.Success(null, "Email Verified Successfully");
+        return ApiResponse.Success(message: "Email Verified Successfully");
     }
 
     private static async Task<IResult> RefreshToken(

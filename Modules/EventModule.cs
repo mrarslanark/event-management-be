@@ -197,7 +197,7 @@ public class EventModule : ICarterModule
         db.Events.Remove(existingEvent);
         await db.SaveChangesAsync();
 
-        return ApiResponse.Success(null, $"The {eventName} was deleted.");
+        return ApiResponse.Success(message: $"The {eventName} was deleted.");
     }
 
     [Authorize(Roles = "Admin")]
@@ -210,6 +210,6 @@ public class EventModule : ICarterModule
         db.Events.RemoveRange(events);
         await db.SaveChangesAsync();
 
-        return ApiResponse.Success(null, $"All {events.Count} events have been deleted.");
+        return ApiResponse.Success(message: $"All {events.Count} events have been deleted.");
     }
 }
