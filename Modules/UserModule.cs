@@ -1,6 +1,7 @@
 using Carter;
 using EventManagement.Data;
 using EventManagement.Exceptions;
+using EventManagement.Helpers;
 using EventManagement.Models.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
@@ -47,16 +48,18 @@ public class UserModule : ICarterModule
         if (adminRole is null || userRole is null)
             throw new ArgumentException("Required roles are missing in the database.");
 
-        db.UserRoles.AddRange(new UserRoleModel { UserId = newUser.Id, RoleId = adminRole.Id }, new UserRoleModel { UserId = newUser.Id, RoleId = userRole.Id });
+        db.UserRoles.AddRange(new UserRoleModel { UserId = newUser.Id, RoleId = adminRole.Id },
+            new UserRoleModel { UserId = newUser.Id, RoleId = userRole.Id });
         await db.SaveChangesAsync();
-            
+
         var tokenString = AuthModule.GenerateToken(config, newUser.Id.ToString(), newUser.Email, ["Admin", "User"]);
-        return Results.Created($"/users/{newUser.Id}", new
+        var data = new
         {
             token = tokenString,
             email = newUser.Email,
             createdAt = DateTimeOffset.UtcNow,
             updatedAt = DateTimeOffset.UtcNow,
-        });
+        };
+        return ApiResponse.Created($"/users/{newUser.Id}", data);
     }
 }
