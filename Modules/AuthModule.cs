@@ -5,6 +5,7 @@ using System.Text;
 using Carter;
 using EventManagement.Data;
 using EventManagement.Exceptions;
+using EventManagement.Helpers;
 using EventManagement.Models.Auth;
 using EventManagement.Models.User;
 using EventManagement.Requests;
@@ -53,8 +54,7 @@ public class AuthModule : ICarterModule
         if (accessToken is null || refreshToken is null)
             throw new UnauthorizedAccessException("Invalid Credentials");
 
-        
-        return Results.Ok(new
+        var data = new
         {
             uid = user.Id,
             token = accessToken,
@@ -63,7 +63,8 @@ public class AuthModule : ICarterModule
             roles,
             createdAt = user.CreatedAt,
             updatedAt = user.UpdatedAt
-        });
+        };
+        return ApiResponse.Success(data);
     }
 
     private static async Task<IResult> Register(
@@ -97,6 +98,7 @@ public class AuthModule : ICarterModule
         db.Users.Add(user);
         await db.SaveChangesAsync();
 
+        // TODO: Send to email through third party service
         Console.WriteLine($"Simulated verification token: {emailToken}");
 
         var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
@@ -116,7 +118,7 @@ public class AuthModule : ICarterModule
         if (accessToken is null || refreshToken is null)
             throw new UnauthorizedAccessException("Invalid Credentials");
 
-        return Results.Created($"/users/{user.Id}", new
+        var data = new
         {
             token = accessToken,
             refreshToken,
@@ -124,7 +126,8 @@ public class AuthModule : ICarterModule
             roles,
             createdAt = user.CreatedAt,
             updatedAt = user.UpdatedAt
-        });
+        };
+        return ApiResponse.Created($"/users/{user.Id}", data);
     }
 
     private static async Task<IResult> VerifyEmail(
@@ -149,7 +152,7 @@ public class AuthModule : ICarterModule
 
         await db.SaveChangesAsync();
 
-        return Results.Ok(new { message = "Email Verified successfully" });
+        return ApiResponse.Success(null, "Email Verified Successfully");
     }
 
     private static async Task<IResult> RefreshToken(
@@ -183,11 +186,12 @@ public class AuthModule : ICarterModule
         if (accessToken is null || refreshToken is null)
             throw new ArgumentException("Unable to refresh token.");
 
-        return Results.Ok(new
+        var data = new
         {
             token = accessToken,
             refreshToken
-        });
+        };
+        return ApiResponse.Success(data);
     }
 
     private static async Task<List<string>> GetRoles(AppDbContext db, string id)

@@ -1,6 +1,6 @@
-namespace EventManagement.Middlewares;
+namespace EventManagement.Helpers;
 
-public class ApiResponse
+public static class ApiResponse
 {
     public static IResult Success(object? data = null, string? message = "Success",
         int statusCode = StatusCodes.Status200OK)
