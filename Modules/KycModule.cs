@@ -1,5 +1,6 @@
 using Carter;
 using EventManagement.Data;
+using EventManagement.Helpers;
 using EventManagement.Models.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +39,6 @@ public class KycModule : ICarterModule
         });
 
         await db.SaveChangesAsync();
-        return Results.Ok(new { message = $"User {user.Email} has been promoted to 'Manager'." });
+        return ApiResponse.Success(message: $"User {user.Email} has been promoted to 'Manager'.");
     }
 }
