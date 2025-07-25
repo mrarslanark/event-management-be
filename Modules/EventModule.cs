@@ -34,6 +34,8 @@ public class EventModule : ICarterModule
     private static async Task<IResult> GetEventById(IEventRepository repo, Guid id)
     {
         var eventById = await repo.GetEventById(id);
+        if (eventById == null)
+            throw new KeyNotFoundException("Event not found");
         return ApiResponse.Success(eventById);
     }
 
