@@ -103,7 +103,7 @@ public class AuthModule : ICarterModule
 
         var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
         if (role is null)
-            throw new Exception("Default role 'User' not found in database.");
+            throw new ArgumentException("Default role 'User' not found in database.");
 
         db.UserRoles.Add(new UserRoleModel
         {
@@ -141,7 +141,7 @@ public class AuthModule : ICarterModule
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == request.Token);
         if (user is null)
-            throw new ArgumentException("Invalid Credentials");
+            throw new ArgumentException("Invalid or expired verification token");
 
         if (user.isEmailVerified)
             return Results.Ok(new { message = "Email is already verified" });

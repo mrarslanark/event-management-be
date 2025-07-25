@@ -36,7 +36,7 @@ public class ExceptionHandlingMiddleware
                     .Select(g => new
                     {
                         field = g.Key.ToLower(),
-                        error = g.Select(e => e.ErrorMessage).ToArray().First()
+                        error = g.Select(e => e.ErrorMessage).FirstOrDefault()
                     });
 
                 var validationResponse = new
@@ -58,8 +58,6 @@ public class ExceptionHandlingMiddleware
                 KeyNotFoundException => StatusCodes.Status404NotFound,
                 _ => StatusCodes.Status500InternalServerError,
             };
-            
-            context.Response.ContentType = "application/json";
 
             var response = new Dictionary<string, object?>
             {
