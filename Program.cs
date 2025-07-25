@@ -5,7 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Carter;
 using EventManagement.Middlewares;
-using EventManagement.Models.User;
+using EventManagement.Models;
+using EventManagement.Repositories;
+using EventManagement.Repositories.Interfaces;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 
@@ -20,8 +22,10 @@ var jwt = builder.Configuration.GetSection("Jwt");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
+
+
 // Authentication
-builder.Services.AddScoped<IPasswordHasher<UserModel>, PasswordHasher<UserModel>>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -49,13 +53,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddAuthorization();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+// Repositories
+builder.Services.AddScoped<IEventRepository, EventRepository>();
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<UserModel>>();
+    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
     db.Database.Migrate();
     await DbSeeder.Seed(builder.Configuration, db, hasher);
 }

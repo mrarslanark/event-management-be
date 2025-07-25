@@ -6,8 +6,7 @@ using Carter;
 using EventManagement.Data;
 using EventManagement.Exceptions;
 using EventManagement.Helpers;
-using EventManagement.Models.Auth;
-using EventManagement.Models.User;
+using EventManagement.Models;
 using EventManagement.Requests;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
@@ -32,7 +31,7 @@ public class AuthModule : ICarterModule
         UserLoginRequest request,
         IValidator<UserLoginRequest> validator,
         AppDbContext db, 
-        IPasswordHasher<UserModel> hasher)
+        IPasswordHasher<User> hasher)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -72,7 +71,7 @@ public class AuthModule : ICarterModule
         UserRegisterRequest request,
         IValidator<UserRegisterRequest> validator,
         AppDbContext db, 
-        IPasswordHasher<UserModel> hasher)
+        IPasswordHasher<User> hasher)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -84,13 +83,13 @@ public class AuthModule : ICarterModule
 
         var emailToken = Guid.NewGuid().ToString();
 
-        var user = new UserModel
+        var user = new User
         {
             Email = request.Email,
             PasswordHash = hasher.HashPassword(null!, request.Password),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            isEmailVerified = false,
+            IsEmailVerified = false,
             EmailVerificationToken = emailToken
         };
         user.PasswordHash = hasher.HashPassword(user, request.Password);
@@ -105,7 +104,7 @@ public class AuthModule : ICarterModule
         if (role is null)
             throw new ArgumentException("Default role 'User' not found in database.");
 
-        db.UserRoles.Add(new UserRoleModel
+        db.UserRoles.Add(new UserRole
         {
             UserId = user.Id,
             RoleId = role.Id
@@ -143,10 +142,10 @@ public class AuthModule : ICarterModule
         if (user is null)
             throw new ArgumentException("Invalid or expired verification token");
 
-        if (user.isEmailVerified)
+        if (user.IsEmailVerified)
             return Results.Ok(new { message = "Email is already verified" });
 
-        user.isEmailVerified = true;
+        user.IsEmailVerified = true;
         user.EmailVerificationToken = null;
         user.UpdatedAt = DateTime.UtcNow;
 
@@ -198,8 +197,8 @@ public class AuthModule : ICarterModule
     {
         return await db.UserRoles
             .Where(userRole => userRole.UserId.ToString() == id)
-            .Include(ur => ur.RoleModel)
-            .Select(ur => ur.RoleModel.Name)
+            .Include(ur => ur.Role)
+            .Select(ur => ur.Role.Name)
             .ToListAsync();
     }
 
@@ -256,7 +255,7 @@ public class AuthModule : ICarterModule
         
         var expiryDays = config.GetValue<int>("Jwt:RefreshTokenExpiryDays");
 
-        db.RefreshTokens.Add(new RefreshTokenModel
+        db.RefreshTokens.Add(new RefreshToken
         {
             Token = refreshToken,
             UserId = userId,

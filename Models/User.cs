@@ -1,9 +1,8 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace EventManagement.Models.User;
+namespace EventManagement.Models;
 
-[Table("Users")]
-public class UserModel
+public class User
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     
@@ -11,11 +10,11 @@ public class UserModel
     
     public string PasswordHash { get; set; } = string.Empty;
     
-    public bool isEmailVerified { get; set; } = false;
+    public bool IsEmailVerified { get; set; } = false;
     public string? EmailVerificationToken { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
-    public ICollection<UserRoleModel> UserRoles { get; set; } = new List<UserRoleModel>();
+    public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 }
