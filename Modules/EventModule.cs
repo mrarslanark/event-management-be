@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Carter;
 using EventManagement.Data;
+using EventManagement.Helpers;
 using EventManagement.Models.Event;
 using EventManagement.Models.Ticket;
 using EventManagement.Requests.Event;
@@ -25,7 +26,7 @@ public class EventModule : ICarterModule
     private static async Task<IResult> GetAllEvents(AppDbContext db)
     {
         var events = await db.Events.ToListAsync();
-        return Results.Ok(events);
+        return ApiResponse.Success(events);
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -35,25 +36,25 @@ public class EventModule : ICarterModule
     {
         var eventValidation = await eventValidator.ValidateAsync(request);
         if (!eventValidation.IsValid)
-            return Results.ValidationProblem(eventValidation.ToDictionary());
+            throw new ValidationException(eventValidation.Errors);
 
         var userId = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId is null)
-            return Results.Unauthorized();
+            throw new UnauthorizedAccessException("Invalid User");
 
         var eventType = await db.EventTypes.FindAsync(request.EventTypeId);
         if (eventType is null)
-            return Results.BadRequest(new { message = "Invalid Event Type ID." });
+            throw new ArgumentException("Invalid Event Type ID.");
 
         // Validate every ticket
         foreach (var ticket in request.Tickets)
         {
             var ticketValidation = await ticketValidator.ValidateAsync(ticket);
             if (!ticketValidation.IsValid)
-                return Results.ValidationProblem(ticketValidation.ToDictionary());
+                throw new ValidationException(ticketValidation.Errors);
         }
 
-        var eventEntity = new EventModel()
+        var eventEntity = new EventModel
         {
             Name = request.Name,
             Location = request.Location,
@@ -79,7 +80,7 @@ public class EventModule : ICarterModule
         db.Events.Add(eventEntity);
         await db.SaveChangesAsync();
 
-        return Results.Created($"/events/{eventEntity.Id}", new
+        var data = new
         {
             id = eventEntity.Id,
             request.Name,
@@ -102,7 +103,8 @@ public class EventModule : ICarterModule
                 Price = t.Price,
                 Count = t.Count
             }).ToList()
-        });
+        };
+        return ApiResponse.Created($"/events/{eventEntity.Id}", data);
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -112,11 +114,11 @@ public class EventModule : ICarterModule
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
-            return Results.ValidationProblem(validation.ToDictionary());
+            throw new ValidationException(validation.Errors);
 
         var userId = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId is null)
-            return Results.Unauthorized();
+            throw new UnauthorizedAccessException("Invalid User");
 
         var eventEntity = await db.Events
             .Include(e => e.Tickets)
@@ -124,11 +126,11 @@ public class EventModule : ICarterModule
             .Include(e => e.CreatedByUserModel)
             .FirstOrDefaultAsync(e => e.Id == id);
         if (eventEntity is null)
-            return Results.NotFound(new { message = "Event not found." });
+            throw new KeyNotFoundException("Event not found");
 
         if (!http.User.IsInRole("Admin") && eventEntity.CreatedByUserId.ToString() != userId)
-            return Results.Forbid();
-
+            throw new UnauthorizedAccessException("Unauthorized Action");
+        
         if (request.Name is not null) eventEntity.Name = request.Name;
         if (request.Location is not null) eventEntity.Location = request.Location;
         if (request.StartTime.HasValue) eventEntity.StartTime = request.StartTime.Value;
@@ -156,7 +158,7 @@ public class EventModule : ICarterModule
         eventEntity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        return Results.Ok(new
+        var data = new
         {
             eventEntity.Id,
             eventEntity.Name,
@@ -179,7 +181,8 @@ public class EventModule : ICarterModule
                 t.Count
             }),
             eventEntity.UpdatedAt
-        });
+        };
+        return ApiResponse.Success(data);
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -187,14 +190,14 @@ public class EventModule : ICarterModule
     {
         var existingEvent = await db.Events.FindAsync(id);
         if (existingEvent is null)
-            return Results.NotFound(new { message = $"Event with ID {id} not found." });
+            throw new KeyNotFoundException($"Event with ID {id} not found.");
 
         var eventName = existingEvent.Name;
 
         db.Events.Remove(existingEvent);
         await db.SaveChangesAsync();
 
-        return Results.Ok(new { message = $"The {eventName} was deleted." });
+        return ApiResponse.Success(message: $"The {eventName} was deleted.");
     }
 
     [Authorize(Roles = "Admin")]
@@ -202,11 +205,11 @@ public class EventModule : ICarterModule
     {
         var events = await db.Events.ToListAsync();
         if (events.Count == 0)
-            return Results.NotFound(new { message = "No events found" });
+            throw new KeyNotFoundException("No events found");
 
         db.Events.RemoveRange(events);
         await db.SaveChangesAsync();
 
-        return Results.Ok(new { message = $"All {events.Count} events have been deleted." });
+        return ApiResponse.Success(message: $"All {events.Count} events have been deleted.");
     }
 }

@@ -1,5 +1,6 @@
 using Carter;
 using EventManagement.Data;
+using EventManagement.Helpers;
 using EventManagement.Models.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -21,11 +22,11 @@ public class KycModule : ICarterModule
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user is null)
-            return Results.NotFound(new { message = "User not found." });
+            throw new KeyNotFoundException("user not found");
 
         var managerRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "Manager");
         if (managerRole is null)
-            return Results.BadRequest(new { message = "'Manager' role not found in database." });
+            throw new ArgumentException("'Manager' role not found in database.");
 
         var alreadyManager = user.UserRoles.Any(ur => ur.RoleId == managerRole.Id);
         if (alreadyManager)
@@ -38,6 +39,6 @@ public class KycModule : ICarterModule
         });
 
         await db.SaveChangesAsync();
-        return Results.Ok(new { message = $"User {user.Email} has been promoted to 'Manager'." });
+        return ApiResponse.Success(message: $"User {user.Email} has been promoted to 'Manager'.");
     }
 }

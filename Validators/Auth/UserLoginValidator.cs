@@ -10,8 +10,8 @@ public class UserLoginValidator : AbstractValidator<UserLoginRequest>
     public UserLoginValidator()
     {
         RuleFor(u => u.Email)
-            .NotEmpty().WithMessage(Message)
-            .EmailAddress().WithMessage(Message);
+            .NotEmpty().WithMessage("Email is required")
+            .EmailAddress().WithMessage("Invalid Email Address");
 
         RuleFor(u => u.Password)
             .NotEmpty().WithMessage(Message)
