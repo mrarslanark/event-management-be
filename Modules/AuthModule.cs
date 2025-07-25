@@ -48,7 +48,7 @@ public class AuthModule : ICarterModule
         if (result is not PasswordVerificationResult.Success)
             throw new UnauthorizedAccessException("Invalid Credentials");
 
-        // Get roles & generate access and refresh token
+        // Get roles and generate access and refresh token
         var roles = await GetRoles(db, user.Id.ToString());
         var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, db);
         if (accessToken is null || refreshToken is null)
@@ -238,7 +238,7 @@ public class AuthModule : ICarterModule
         return tokenString;
     }
 
-    private static string? GenerateRefreshToken(IConfiguration config)
+    private static string GenerateRefreshToken(IConfiguration config)
     {
         var size = config.GetValue<int>("Jwt:RefreshTokenSize");
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(size));
@@ -251,7 +251,7 @@ public class AuthModule : ICarterModule
         var accessToken = GenerateToken(config, userId.ToString(), email, roles);
         var refreshToken = GenerateRefreshToken(config);
 
-        if (accessToken is null || refreshToken is null)
+        if (accessToken is null)
             return (null, null);
         
         var expiryDays = config.GetValue<int>("Jwt:RefreshTokenExpiryDays");
