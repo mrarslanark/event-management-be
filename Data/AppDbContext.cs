@@ -32,19 +32,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(ur => ur.Role)
             .WithMany(r => r.UserRoles)
             .HasForeignKey(ur => ur.RoleId);
-
-        // modelBuilder.Entity<Event>()
-        //     .HasOne(e => e.CreatedByUser)
-        //     .WithMany()
-        //     .HasForeignKey(e => e.CreatedByUserId)
-        //     .OnDelete(DeleteBehavior.Restrict);
-        
-        // modelBuilder.Entity<Event>()
-        //     .Property(e => e.Tags)
-        //     .HasConversion(
-        //         v => JsonSerializer.Serialize(v, new JsonSerializerOptions()),
-        //         v => JsonSerializer.Deserialize<List<string>>(v, new JsonSerializerOptions()) ?? new List<string>()
-        //  );
         
         modelBuilder.Entity<RefreshToken>()
             .HasIndex(rt => rt.Token)
