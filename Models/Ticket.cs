@@ -1,12 +1,17 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace EventManagement.Models;
 
 public class Ticket
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string Name { get; set; } = string.Empty;       // e.g. VIP, Regular
-    public string Description { get; set; } = string.Empty;
-    public float Price { get; set; }
-    public int Count { get; set; }
-
-    public Guid EventId { get; set; }
+    public Guid Id { get; init; } = Guid.NewGuid();
+    
+    [Column(TypeName = "varchar(150)")]
+    public string Name { get; init; } = string.Empty;
+    
+    [Column(TypeName = "varchar(3000)")]
+    public string Description { get; init; } = string.Empty;
+    public float Price { get; init; }
+    public int Count { get; init; }
+    public Guid EventId { get; init; }
 }

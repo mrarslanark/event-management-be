@@ -29,7 +29,6 @@ namespace EventManagement.Migrations
                         .HasColumnType("char(36)");
 
                     b.Property<string>("BannerUrl")
-                        .HasMaxLength(2083)
                         .HasColumnType("varchar(2083)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -40,7 +39,6 @@ namespace EventManagement.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(2000)
                         .HasColumnType("varchar(2000)");
 
                     b.Property<DateTime>("EndTime")
@@ -54,7 +52,6 @@ namespace EventManagement.Migrations
 
                     b.Property<string>("Location")
                         .IsRequired()
-                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<int?>("MaxAttendees")
@@ -62,7 +59,6 @@ namespace EventManagement.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
                     b.Property<DateTime>("StartTime")
@@ -92,7 +88,6 @@ namespace EventManagement.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
@@ -114,7 +109,7 @@ namespace EventManagement.Migrations
 
                     b.Property<string>("Token")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("varchar(512)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("char(36)");
@@ -137,7 +132,7 @@ namespace EventManagement.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
@@ -155,14 +150,14 @@ namespace EventManagement.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(3000)");
 
                     b.Property<Guid>("EventId")
                         .HasColumnType("char(36)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(150)");
 
                     b.Property<float>("Price")
                         .HasColumnType("float");
@@ -185,17 +180,17 @@ namespace EventManagement.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(320)");
 
                     b.Property<string>("EmailVerificationToken")
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(256)");
 
                     b.Property<bool>("IsEmailVerified")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(512)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");

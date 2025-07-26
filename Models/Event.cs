@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EventManagement.Models;
@@ -7,16 +6,16 @@ public class Event
 {
     public Guid Id { get; init; } = Guid.NewGuid();
 
-    [Column(TypeName = "varchar(150)"), MaxLength(150)]
+    [Column(TypeName = "varchar(150)")]
     public string Name { get; set; } = string.Empty;
     
-    [Column(TypeName = "varchar(255)"), MaxLength(255)]
+    [Column(TypeName = "varchar(255)")]
     public string Location { get; set; } = string.Empty;
 
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
 
-    [Column(TypeName = "varchar(2000)"), MaxLength(2000)]
+    [Column(TypeName = "varchar(2000)")]
     public string Description { get; set; } = string.Empty;
 
     // 🆕 Event Type (Genre)
@@ -32,7 +31,7 @@ public class Event
 
     public bool IsPublished { get; set; }
 
-    [Column(TypeName = "varchar(2083)"), MaxLength(2083)]
+    [Column(TypeName = "varchar(2083)")]
     public string? BannerUrl { get; set; }
 
     public int? MaxAttendees { get; set; }  // Optional limit
