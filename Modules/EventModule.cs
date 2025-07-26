@@ -41,7 +41,7 @@ public class EventModule : ICarterModule
         {
             Id = eventById.Id,
             Name = eventById.Name,
-            Description = eventById.Name,
+            Description = eventById.Description,
             Location = eventById.Location,
             StartTime = eventById.StartTime,
             EndTime = eventById.EndTime,

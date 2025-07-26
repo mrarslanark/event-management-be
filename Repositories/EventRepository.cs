@@ -17,7 +17,7 @@ public class EventRepository(AppDbContext db) : IEventRepository
             {
                 Id = e.Id,
                 Name = e.Name,
-                Description = e.Name,
+                Description = e.Description,
                 Location = e.Location,
                 StartTime = e.StartTime,
                 EndTime = e.EndTime,
