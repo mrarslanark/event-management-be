@@ -1,14 +1,12 @@
 using System.Security.Claims;
 using Carter;
-using EventManagement.Data;
 using EventManagement.Helpers;
-using EventManagement.Models.Event;
-using EventManagement.Models.Ticket;
+using EventManagement.Models;
+using EventManagement.Repositories.Interfaces;
 using EventManagement.Requests.Event;
 using EventManagement.Requests.Ticket;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 
 namespace EventManagement.Modules;
 
@@ -17,22 +15,35 @@ public class EventModule : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapGet("/events", GetAllEvents);
+        app.MapGet("/events/types", GetAllEventTypes);
+        app.MapGet("/events/{id:guid}", GetEventById);
         app.MapPost("/events", CreateEvent);
         app.MapPatch("/events/{id:guid}", UpdateEvent);
         app.MapDelete("/events/{id:guid}", DeleteEvent);
         app.MapDelete("/events", DeleteAllEvents);
     }
 
-    private static async Task<IResult> GetAllEvents(AppDbContext db)
+    private static async Task<IResult> GetAllEvents(IEventRepository repo)
     {
-        var events = await db.Events.ToListAsync();
+        var events = await repo.GetAllEvents();
         return ApiResponse.Success(events);
     }
 
+    private static async Task<IResult> GetEventById(IEventRepository repo, Guid id)
+    {
+        var eventById = await repo.GetEventById(id);
+        if (eventById == null)
+            throw new KeyNotFoundException("Event not found");
+        return ApiResponse.Success(eventById);
+    }
+
     [Authorize(Roles = "Admin,Manager")]
-    private static async Task<IResult> CreateEvent(CreateEventRequest request,
-        IValidator<CreateEventRequest> eventValidator, IValidator<CreateTicketRequest> ticketValidator,
-        AppDbContext db, HttpContext http)
+    private static async Task<IResult> CreateEvent(
+        CreateEventRequest request,
+        IValidator<CreateEventRequest> eventValidator,
+        IValidator<CreateTicketRequest> ticketValidator,
+        HttpContext http,
+        IEventRepository repo)
     {
         var eventValidation = await eventValidator.ValidateAsync(request);
         if (!eventValidation.IsValid)
@@ -42,7 +53,8 @@ public class EventModule : ICarterModule
         if (userId is null)
             throw new UnauthorizedAccessException("Invalid User");
 
-        var eventType = await db.EventTypes.FindAsync(request.EventTypeId);
+        // var eventType = await db.EventTypes.FindAsync(request.EventTypeId);
+        var eventType = await repo.GetEventTypeById(request.EventTypeId);
         if (eventType is null)
             throw new ArgumentException("Invalid Event Type ID.");
 
@@ -54,14 +66,14 @@ public class EventModule : ICarterModule
                 throw new ValidationException(ticketValidation.Errors);
         }
 
-        var eventEntity = new EventModel
+        var eventEntity = new Event
         {
             Name = request.Name,
             Location = request.Location,
             StartTime = request.StartTime,
             EndTime = request.EndTime,
             Description = request.Description,
-            EventTypeModelId = request.EventTypeId,
+            EventTypeId = request.EventTypeId,
             IsPublished = request.IsPublished,
             BannerUrl = request.BannerUrl,
             MaxAttendees = request.MaxAttendees,
@@ -69,16 +81,15 @@ public class EventModule : ICarterModule
             CreatedByUserId = Guid.Parse(userId),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            Tickets = request.Tickets.Select(t => new TicketModel
+            Tickets = request.Tickets.Select(t => new Ticket
             {
                 Name = t.Name,
                 Description = t.Description,
                 Price = t.Price,
-                Count = t.Count
+                Count = t.Count,
             }).ToList()
         };
-        db.Events.Add(eventEntity);
-        await db.SaveChangesAsync();
+        await repo.CreateEvent(eventEntity);
 
         var data = new
         {
@@ -96,7 +107,7 @@ public class EventModule : ICarterModule
             CreatedByUserId = Guid.Parse(userId).ToString(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            Tickets = request.Tickets.Select(t => new TicketModel
+            Tickets = request.Tickets.Select(t => new Ticket
             {
                 Name = t.Name,
                 Description = t.Description,
@@ -108,9 +119,12 @@ public class EventModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin,Manager")]
-    private static async Task<IResult> UpdateEvent(Guid id, PatchEventRequest request,
-        IValidator<PatchEventRequest> validator, AppDbContext db,
-        HttpContext http)
+    private static async Task<IResult> UpdateEvent(
+        Guid id,
+        PatchEventRequest request,
+        IValidator<PatchEventRequest> validator,
+        HttpContext http,
+        IEventRepository repo)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -120,23 +134,19 @@ public class EventModule : ICarterModule
         if (userId is null)
             throw new UnauthorizedAccessException("Invalid User");
 
-        var eventEntity = await db.Events
-            .Include(e => e.Tickets)
-            .Include(e => e.EventTypeModel)
-            .Include(e => e.CreatedByUserModel)
-            .FirstOrDefaultAsync(e => e.Id == id);
+        var eventEntity = await repo.GetEventById(id);
         if (eventEntity is null)
             throw new KeyNotFoundException("Event not found");
 
         if (!http.User.IsInRole("Admin") && eventEntity.CreatedByUserId.ToString() != userId)
             throw new UnauthorizedAccessException("Unauthorized Action");
-        
+
         if (request.Name is not null) eventEntity.Name = request.Name;
         if (request.Location is not null) eventEntity.Location = request.Location;
         if (request.StartTime.HasValue) eventEntity.StartTime = request.StartTime.Value;
         if (request.EndTime.HasValue) eventEntity.EndTime = request.EndTime.Value;
         if (request.Description is not null) eventEntity.Description = request.Description;
-        if (request.EventTypeId.HasValue) eventEntity.EventTypeModelId = request.EventTypeId.Value;
+        if (request.EventTypeId.HasValue) eventEntity.EventTypeId = request.EventTypeId.Value;
         if (request.IsPublished.HasValue) eventEntity.IsPublished = request.IsPublished.Value;
         if (request.BannerUrl is not null) eventEntity.BannerUrl = request.BannerUrl;
         if (request.MaxAttendees.HasValue) eventEntity.MaxAttendees = request.MaxAttendees;
@@ -144,8 +154,8 @@ public class EventModule : ICarterModule
 
         if (request.Tickets is not null)
         {
-            db.Tickets.RemoveRange(eventEntity.Tickets);
-            eventEntity.Tickets = request.Tickets.Select(t => new TicketModel
+            await repo.RemoveTickets(eventEntity.Tickets);
+            eventEntity.Tickets = request.Tickets.Select(t => new Ticket
             {
                 Name = t.Name,
                 Description = t.Description,
@@ -156,7 +166,7 @@ public class EventModule : ICarterModule
         }
 
         eventEntity.UpdatedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
+        await repo.UpdateEvent(eventEntity);
 
         var data = new
         {
@@ -170,8 +180,8 @@ public class EventModule : ICarterModule
             eventEntity.BannerUrl,
             eventEntity.MaxAttendees,
             eventEntity.Tags,
-            eventType = eventEntity.EventTypeModel.Name,
-            createdBy = eventEntity.CreatedByUserModel.Email,
+            eventType = eventEntity.EventType.Name,
+            createdBy = eventEntity.CreatedByUser.Email,
             tickets = eventEntity.Tickets.Select(t => new
             {
                 t.Id,
@@ -186,30 +196,37 @@ public class EventModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin,Manager")]
-    private static async Task<IResult> DeleteEvent(Guid id, AppDbContext db)
+    private static async Task<IResult> DeleteEvent(Guid id, IEventRepository repo)
     {
-        var existingEvent = await db.Events.FindAsync(id);
+        var existingEvent = await repo.GetEventById(id);
         if (existingEvent is null)
             throw new KeyNotFoundException($"Event with ID {id} not found.");
 
         var eventName = existingEvent.Name;
 
-        db.Events.Remove(existingEvent);
-        await db.SaveChangesAsync();
+        await repo.DeleteEvent(existingEvent);
 
         return ApiResponse.Success(message: $"The {eventName} was deleted.");
     }
 
     [Authorize(Roles = "Admin")]
-    private static async Task<IResult> DeleteAllEvents(AppDbContext db)
+    private static async Task<IResult> DeleteAllEvents(IEventRepository repo)
     {
-        var events = await db.Events.ToListAsync();
+        var events = await repo.GetAllEvents();
         if (events.Count == 0)
             throw new KeyNotFoundException("No events found");
 
-        db.Events.RemoveRange(events);
-        await db.SaveChangesAsync();
+        await repo.DeleteAllEvents(events);
 
         return ApiResponse.Success(message: $"All {events.Count} events have been deleted.");
+    }
+
+    private static async Task<IResult> GetAllEventTypes(IEventRepository repo)
+    {
+        var eventTypes = await repo.GetAllEventTypes();
+        if (eventTypes.Count == 0)
+            throw new KeyNotFoundException("No event types found");
+        
+        return ApiResponse.Success(eventTypes);
     }
 }

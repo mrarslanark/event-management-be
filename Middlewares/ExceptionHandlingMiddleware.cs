@@ -3,28 +3,20 @@ using FluentValidation;
 
 namespace EventManagement.Middlewares;
 
-public class ExceptionHandlingMiddleware
+public class ExceptionHandlingMiddleware(
+    RequestDelegate next,
+    ILogger<ExceptionHandlingMiddleware> logger,
+    IHostEnvironment env)
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
-    private readonly IHostEnvironment _env;
-
-    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger, IHostEnvironment env)
-    {
-        _next = next;
-        _logger = logger;
-        _env = env;
-    }
-
     public async Task Invoke(HttpContext context)
     {
         try
         {
-            await _next(context);
+            await next(context);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred");
+            logger.LogError(ex, "An unhandled exception occurred");
             context.Response.ContentType = "application/json";
 
             if (ex is ValidationException validationException)
@@ -66,7 +58,7 @@ public class ExceptionHandlingMiddleware
                 ["status"] = context.Response.StatusCode
             };
 
-            if (!_env.IsProduction())
+            if (!env.IsProduction())
             {
                 response["stacktrace"] = ex.StackTrace;
             }

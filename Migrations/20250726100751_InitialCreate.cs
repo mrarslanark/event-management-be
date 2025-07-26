@@ -19,7 +19,7 @@ namespace EventManagement.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Name = table.Column<string>(type: "longtext", nullable: false)
+                    Name = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -33,7 +33,7 @@ namespace EventManagement.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Name = table.Column<string>(type: "longtext", nullable: false)
+                    Name = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -47,12 +47,12 @@ namespace EventManagement.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Email = table.Column<string>(type: "longtext", nullable: false)
+                    Email = table.Column<string>(type: "varchar(320)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PasswordHash = table.Column<string>(type: "longtext", nullable: false)
+                    PasswordHash = table.Column<string>(type: "varchar(512)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    isEmailVerified = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    EmailVerificationToken = table.Column<string>(type: "longtext", nullable: true)
+                    IsEmailVerified = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    EmailVerificationToken = table.Column<string>(type: "varchar(256)", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
@@ -68,18 +68,18 @@ namespace EventManagement.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Name = table.Column<string>(type: "longtext", nullable: false)
+                    Name = table.Column<string>(type: "varchar(150)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Location = table.Column<string>(type: "longtext", nullable: false)
+                    Location = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     StartTime = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     EndTime = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    Description = table.Column<string>(type: "longtext", nullable: false)
+                    Description = table.Column<string>(type: "varchar(2000)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    EventTypeModelId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    EventTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     CreatedByUserId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     IsPublished = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    BannerUrl = table.Column<string>(type: "longtext", nullable: true)
+                    BannerUrl = table.Column<string>(type: "varchar(2083)", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     MaxAttendees = table.Column<int>(type: "int", nullable: true),
                     Tags = table.Column<string>(type: "longtext", nullable: false)
@@ -91,8 +91,8 @@ namespace EventManagement.Migrations
                 {
                     table.PrimaryKey("PK_Events", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Events_EventTypes_EventTypeModelId",
-                        column: x => x.EventTypeModelId,
+                        name: "FK_Events_EventTypes_EventTypeId",
+                        column: x => x.EventTypeId,
                         principalTable: "EventTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -110,7 +110,7 @@ namespace EventManagement.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Token = table.Column<string>(type: "varchar(255)", nullable: false)
+                    Token = table.Column<string>(type: "varchar(512)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ExpiresAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     IsRevoked = table.Column<bool>(type: "tinyint(1)", nullable: false),
@@ -158,21 +158,20 @@ namespace EventManagement.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Name = table.Column<string>(type: "longtext", nullable: false)
+                    Name = table.Column<string>(type: "varchar(150)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Description = table.Column<string>(type: "longtext", nullable: false)
+                    Description = table.Column<string>(type: "varchar(3000)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Price = table.Column<float>(type: "float", nullable: false),
                     Count = table.Column<int>(type: "int", nullable: false),
-                    EventId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    EventModelId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
+                    EventId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tickets", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Tickets_Events_EventModelId",
-                        column: x => x.EventModelId,
+                        name: "FK_Tickets_Events_EventId",
+                        column: x => x.EventId,
                         principalTable: "Events",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -185,9 +184,9 @@ namespace EventManagement.Migrations
                 column: "CreatedByUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_EventTypeModelId",
+                name: "IX_Events_EventTypeId",
                 table: "Events",
-                column: "EventTypeModelId");
+                column: "EventTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_Token",
@@ -201,9 +200,9 @@ namespace EventManagement.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tickets_EventModelId",
+                name: "IX_Tickets_EventId",
                 table: "Tickets",
-                column: "EventModelId");
+                column: "EventId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_RoleId",

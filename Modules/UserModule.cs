@@ -1,11 +1,10 @@
 using Carter;
-using EventManagement.Data;
 using EventManagement.Exceptions;
 using EventManagement.Helpers;
-using EventManagement.Models.User;
+using EventManagement.Models;
+using EventManagement.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace EventManagement.Modules;
 
@@ -18,10 +17,10 @@ public class UserModule : ICarterModule
 
     private static async Task<IResult> CreateAdminUser(
         RegisterRequest request,
-        AppDbContext db,
-        IPasswordHasher<UserModel> hasher,
+        IPasswordHasher<User> hasher,
         IConfiguration config,
-        HttpContext http)
+        HttpContext http,
+        IAuthRepository repo)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             throw new ArgumentException("Email and password are required");
@@ -30,27 +29,29 @@ public class UserModule : ICarterModule
         if (!isEmailValid)
             throw new ArgumentException("Invalid email address");
 
-        var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        var existingUser = await repo.GetUserByEmail(request.Email);
         if (existingUser is not null)
             throw new ConflictException("Email already exists");
 
-        var newUser = new UserModel
+        var newUser = new User
         {
             Email = request.Email,
             PasswordHash = hasher.HashPassword(null!, request.Password),
         };
-        db.Users.Add(newUser);
-        await db.SaveChangesAsync();
-
-        var adminRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-        var userRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+        await repo.AddUser(newUser);
+        
+        var adminRole = await repo.GetRoleByName("Admin");
+        var userRole = await repo.GetRoleByName("User");
 
         if (adminRole is null || userRole is null)
             throw new ArgumentException("Required roles are missing in the database.");
 
-        db.UserRoles.AddRange(new UserRoleModel { UserId = newUser.Id, RoleId = adminRole.Id },
-            new UserRoleModel { UserId = newUser.Id, RoleId = userRole.Id });
-        await db.SaveChangesAsync();
+        List<UserRole> roles =
+        [
+            new() { UserId = newUser.Id, RoleId = adminRole.Id },
+            new() { UserId = newUser.Id, RoleId = userRole.Id }
+        ];
+        await repo.AssignRoles(roles);
 
         var tokenString = AuthModule.GenerateToken(config, newUser.Id.ToString(), newUser.Email, ["Admin", "User"]);
         var data = new

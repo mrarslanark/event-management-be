@@ -1,7 +1,8 @@
 using Carter;
 using EventManagement.Data;
 using EventManagement.Helpers;
-using EventManagement.Models.User;
+using EventManagement.Models;
+using EventManagement.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,30 +16,26 @@ public class KycModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin")]
-    private static async Task<IResult> KycApproved(Guid userId, AppDbContext db)
+    private static async Task<IResult> KycApproved(Guid userId, IAuthRepository repo)
     {
-        var user = await db.Users
-            .Include(u => u.UserRoles)
-            .FirstOrDefaultAsync(u => u.Id == userId);
-
+        var user = await repo.GetUserById(userId);
         if (user is null)
             throw new KeyNotFoundException("user not found");
-
-        var managerRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "Manager");
+        
+        var managerRole = await repo.GetRoleByName("Manager");
         if (managerRole is null)
             throw new ArgumentException("'Manager' role not found in database.");
 
-        var alreadyManager = user.UserRoles.Any(ur => ur.RoleId == managerRole.Id);
-        if (alreadyManager)
+        var isManager = user.UserRoles.Any(ur => ur.RoleId == managerRole.Id);
+        if (isManager)
             return Results.Ok(new { message = $"User {user.Email} already has 'Manager' role." });
 
-        user.UserRoles.Add(new UserRoleModel
+        var userRole = new UserRole
         {
             UserId = user.Id,
             RoleId = managerRole.Id
-        });
-
-        await db.SaveChangesAsync();
+        };
+        await repo.AssignRoleToUser(user, userRole);
         return ApiResponse.Success(message: $"User {user.Email} has been promoted to 'Manager'.");
     }
 }

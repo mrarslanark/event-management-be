@@ -3,16 +3,14 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Carter;
-using EventManagement.Data;
 using EventManagement.Exceptions;
 using EventManagement.Helpers;
-using EventManagement.Models.Auth;
-using EventManagement.Models.User;
+using EventManagement.Models;
+using EventManagement.Repositories.Interfaces;
 using EventManagement.Requests;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace EventManagement.Modules;
@@ -31,15 +29,15 @@ public class AuthModule : ICarterModule
         IConfiguration config, 
         UserLoginRequest request,
         IValidator<UserLoginRequest> validator,
-        AppDbContext db, 
-        IPasswordHasher<UserModel> hasher)
+        IPasswordHasher<User> hasher,
+        IAuthRepository repo)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
             throw new ValidationException(validation.Errors);
 
         // Find user from the database
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        var user = await repo.GetUserByEmail(request.Email);
         if (user is null)
             throw new ArgumentException("Invalid Credentials");
 
@@ -49,14 +47,14 @@ public class AuthModule : ICarterModule
             throw new UnauthorizedAccessException("Invalid Credentials");
 
         // Get roles and generate access and refresh token
-        var roles = await GetRoles(db, user.Id.ToString());
-        var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, db);
+        var roles = await repo.GetUserRoles(user.Id);
+        var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, repo);
         if (accessToken is null || refreshToken is null)
             throw new UnauthorizedAccessException("Invalid Credentials");
 
         var data = new
         {
-            uid = user.Id,
+            id = user.Id,
             token = accessToken,
             refreshToken,
             email = user.Email,
@@ -71,55 +69,54 @@ public class AuthModule : ICarterModule
         IConfiguration config, 
         UserRegisterRequest request,
         IValidator<UserRegisterRequest> validator,
-        AppDbContext db, 
-        IPasswordHasher<UserModel> hasher)
+        IPasswordHasher<User> hasher,
+        IAuthRepository repo)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
             throw new ValidationException(validation.Errors);
 
-        var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        var existingUser = await repo.GetUserByEmail(request.Email);
         if (existingUser is not null)
             throw new ConflictException("User already exists, Login");
 
         var emailToken = Guid.NewGuid().ToString();
 
-        var user = new UserModel
+        var user = new User
         {
             Email = request.Email,
             PasswordHash = hasher.HashPassword(null!, request.Password),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            isEmailVerified = false,
-            EmailVerificationToken = emailToken
+            IsEmailVerified = false,
+            EmailVerificationToken = emailToken,
         };
         user.PasswordHash = hasher.HashPassword(user, request.Password);
-
-        db.Users.Add(user);
-        await db.SaveChangesAsync();
+        await repo.AddUser(user);
 
         // TODO: Send to email through third party service
         Console.WriteLine($"Simulated verification token: {emailToken}");
 
-        var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+        var role = await repo.GetRoleByName("User");
         if (role is null)
             throw new ArgumentException("Default role 'User' not found in database.");
 
-        db.UserRoles.Add(new UserRoleModel
+        var userRole = new UserRole
         {
             UserId = user.Id,
             RoleId = role.Id
-        });
-        await db.SaveChangesAsync();
+        };
+        await repo.AssignRole(userRole);
 
-        var roles = await GetRoles(db, user.Id.ToString());
+        var roles = await repo.GetUserRoles(user.Id);
 
-        var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, db);
+        var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, repo);
         if (accessToken is null || refreshToken is null)
             throw new UnauthorizedAccessException("Invalid Credentials");
 
         var data = new
         {
+            id = user.Id,
             token = accessToken,
             refreshToken,
             email = user.Email,
@@ -133,24 +130,20 @@ public class AuthModule : ICarterModule
     private static async Task<IResult> VerifyEmail(
         [FromBody] VerifyEmailRequest request,
         IValidator<VerifyEmailRequest> validator, 
-        AppDbContext db)
+        IAuthRepository repo)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
             throw new ValidationException(validation.Errors);
 
-        var user = await db.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == request.Token);
+        var user = await repo.GetUserByEmailVerificationToken(request.Token);
         if (user is null)
             throw new ArgumentException("Invalid or expired verification token");
 
-        if (user.isEmailVerified)
+        if (user.IsEmailVerified)
             return Results.Ok(new { message = "Email is already verified" });
 
-        user.isEmailVerified = true;
-        user.EmailVerificationToken = null;
-        user.UpdatedAt = DateTime.UtcNow;
-
-        await db.SaveChangesAsync();
+        await repo.VerifyEmail(user);
 
         return ApiResponse.Success(message: "Email Verified Successfully");
     }
@@ -158,16 +151,14 @@ public class AuthModule : ICarterModule
     private static async Task<IResult> RefreshToken(
         IConfiguration config, 
         RefreshTokenRequest request,
-        IValidator<RefreshTokenRequest> validator, 
-        AppDbContext db)
+        IValidator<RefreshTokenRequest> validator,
+        IAuthRepository repo)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
             throw new ValidationException(validation.Errors);
 
-        var existingToken = await db.RefreshTokens
-            .Include(rt => rt.User)
-            .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken && !rt.IsRevoked);
+        var existingToken = await repo.GetRefreshToken(request.RefreshToken);
         if (existingToken is null || existingToken.ExpiresAt < DateTime.UtcNow)
             throw new UnauthorizedAccessException("Refresh token has expired");
 
@@ -175,14 +166,11 @@ public class AuthModule : ICarterModule
         if (user is null)
             throw new ArgumentException("Invalid refresh token.");
 
-        var userId = user.Id.ToString();
-
         // Revoke old token
-        existingToken.IsRevoked = true;
-        await db.SaveChangesAsync();
+        await repo.RevokeRefreshToken(existingToken);
 
-        var roles = await GetRoles(db, userId);
-        var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, db);
+        var roles = await repo.GetUserRoles(user.Id);
+        var (accessToken, refreshToken) = await GenerateTokensAsync(config, user.Id, user.Email, roles, repo);
         if (accessToken is null || refreshToken is null)
             throw new ArgumentException("Unable to refresh token.");
 
@@ -192,15 +180,6 @@ public class AuthModule : ICarterModule
             refreshToken
         };
         return ApiResponse.Success(data);
-    }
-
-    private static async Task<List<string>> GetRoles(AppDbContext db, string id)
-    {
-        return await db.UserRoles
-            .Where(userRole => userRole.UserId.ToString() == id)
-            .Include(ur => ur.RoleModel)
-            .Select(ur => ur.RoleModel.Name)
-            .ToListAsync();
     }
 
     public static string? GenerateToken(
@@ -244,9 +223,12 @@ public class AuthModule : ICarterModule
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(size));
     }
 
-    private static async Task<(string? accessToken, string? refreshToken)> GenerateTokensAsync(IConfiguration config,
+    private static async Task<(string? accessToken, string? refreshToken)> GenerateTokensAsync(
+        IConfiguration config,
         Guid userId,
-        string email, List<string> roles, AppDbContext db)
+        string email, 
+        List<string> roles, 
+        IAuthRepository repo)
     {
         var accessToken = GenerateToken(config, userId.ToString(), email, roles);
         var refreshToken = GenerateRefreshToken(config);
@@ -256,14 +238,14 @@ public class AuthModule : ICarterModule
         
         var expiryDays = config.GetValue<int>("Jwt:RefreshTokenExpiryDays");
 
-        db.RefreshTokens.Add(new RefreshTokenModel
+        var token = new RefreshToken
         {
             Token = refreshToken,
             UserId = userId,
             ExpiresAt = DateTime.UtcNow.AddDays(expiryDays),
             IsRevoked = false
-        });
-        await db.SaveChangesAsync();
+        };
+        await repo.SaveRefreshToken(token);
 
         return (accessToken, refreshToken);
     }
