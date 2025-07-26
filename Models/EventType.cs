@@ -1,8 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace EventManagement.Models;
 
 public class EventType
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string Name { get; set; } = string.Empty;
-
+    public Guid Id { get; init; } = Guid.NewGuid();
+    
+    [Column(TypeName = "varchar(255)"), MaxLength(255)]
+    public string Name { get; init; } = string.Empty;
 }
