@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250725223420_InitialCreate")]
+    [Migration("20250726095243_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -231,7 +231,7 @@ namespace EventManagement.Migrations
                         .IsRequired();
 
                     b.HasOne("EventManagement.Models.EventType", "EventType")
-                        .WithMany("Events")
+                        .WithMany()
                         .HasForeignKey("EventTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -254,13 +254,11 @@ namespace EventManagement.Migrations
 
             modelBuilder.Entity("EventManagement.Models.Ticket", b =>
                 {
-                    b.HasOne("EventManagement.Models.Event", "Event")
+                    b.HasOne("EventManagement.Models.Event", null)
                         .WithMany("Tickets")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Event");
                 });
 
             modelBuilder.Entity("EventManagement.Models.UserRole", b =>
@@ -285,11 +283,6 @@ namespace EventManagement.Migrations
             modelBuilder.Entity("EventManagement.Models.Event", b =>
                 {
                     b.Navigation("Tickets");
-                });
-
-            modelBuilder.Entity("EventManagement.Models.EventType", b =>
-                {
-                    b.Navigation("Events");
                 });
 
             modelBuilder.Entity("EventManagement.Models.Role", b =>

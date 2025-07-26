@@ -228,7 +228,7 @@ namespace EventManagement.Migrations
                         .IsRequired();
 
                     b.HasOne("EventManagement.Models.EventType", "EventType")
-                        .WithMany("Events")
+                        .WithMany()
                         .HasForeignKey("EventTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -251,13 +251,11 @@ namespace EventManagement.Migrations
 
             modelBuilder.Entity("EventManagement.Models.Ticket", b =>
                 {
-                    b.HasOne("EventManagement.Models.Event", "Event")
+                    b.HasOne("EventManagement.Models.Event", null)
                         .WithMany("Tickets")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Event");
                 });
 
             modelBuilder.Entity("EventManagement.Models.UserRole", b =>
@@ -282,11 +280,6 @@ namespace EventManagement.Migrations
             modelBuilder.Entity("EventManagement.Models.Event", b =>
                 {
                     b.Navigation("Tickets");
-                });
-
-            modelBuilder.Entity("EventManagement.Models.EventType", b =>
-                {
-                    b.Navigation("Events");
                 });
 
             modelBuilder.Entity("EventManagement.Models.Role", b =>
