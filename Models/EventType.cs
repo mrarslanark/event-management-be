@@ -8,4 +8,6 @@ public class EventType
     
     [Column(TypeName = "varchar(255)")]
     public string Name { get; init; } = string.Empty;
+    
+    public ICollection<Event> Events { get; init; } = new List<Event>();
 }

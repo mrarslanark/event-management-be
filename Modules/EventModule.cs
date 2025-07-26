@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using Carter;
+using EventManagement.DTOs.Event;
+using EventManagement.DTOs.Ticket;
 using EventManagement.Helpers;
 using EventManagement.Models;
 using EventManagement.Repositories.Interfaces;
@@ -34,7 +36,33 @@ public class EventModule : ICarterModule
         var eventById = await repo.GetEventById(id);
         if (eventById == null)
             throw new KeyNotFoundException("Event not found");
-        return ApiResponse.Success(eventById);
+
+        var data = new EventDto
+        {
+            Id = eventById.Id,
+            Name = eventById.Name,
+            Description = eventById.Description,
+            Location = eventById.Location,
+            StartTime = eventById.StartTime,
+            EndTime = eventById.EndTime,
+            BannerUrl = eventById.BannerUrl,
+            IsPublished = eventById.IsPublished,
+            MaxAttendees = eventById.MaxAttendees,
+            CreatedBy = eventById.CreatedByUser.Email,
+            CreatedAt = eventById.CreatedAt,
+            UpdatedAt = eventById.UpdatedAt,
+            Type = eventById.EventType.Name,
+            Tags = eventById.Tags,
+            Tickets = eventById.Tickets.Select(t => new TicketDto
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Description = t.Description,
+                Price = t.Price,
+                Count = t.Count,
+            }).ToList()
+        };
+        return ApiResponse.Success(data);
     }
 
     [Authorize(Roles = "Admin,Manager")]
@@ -43,7 +71,8 @@ public class EventModule : ICarterModule
         IValidator<CreateEventRequest> eventValidator,
         IValidator<CreateTicketRequest> ticketValidator,
         HttpContext http,
-        IEventRepository repo)
+        IEventRepository repo,
+        IAuthRepository authRepo)
     {
         var eventValidation = await eventValidator.ValidateAsync(request);
         if (!eventValidation.IsValid)
@@ -69,51 +98,25 @@ public class EventModule : ICarterModule
         var eventEntity = new Event
         {
             Name = request.Name,
-            Location = request.Location,
-            StartTime = request.StartTime,
-            EndTime = request.EndTime,
-            Description = request.Description,
             EventTypeId = request.EventTypeId,
-            IsPublished = request.IsPublished,
-            BannerUrl = request.BannerUrl,
-            MaxAttendees = request.MaxAttendees,
-            Tags = request.Tags,
+            IsPublished = false,
             CreatedByUserId = Guid.Parse(userId),
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            Tickets = request.Tickets.Select(t => new Ticket
-            {
-                Name = t.Name,
-                Description = t.Description,
-                Price = t.Price,
-                Count = t.Count,
-            }).ToList()
+            UpdatedAt = DateTime.UtcNow
         };
         await repo.CreateEvent(eventEntity);
 
+        var typeById = await repo.GetEventTypeById(eventEntity.EventTypeId);
+        var userById = await authRepo.GetUserById(eventEntity.CreatedByUserId);
+
         var data = new
         {
-            id = eventEntity.Id,
-            request.Name,
-            request.Location,
-            request.StartTime,
-            request.EndTime,
-            request.Description,
-            EventType = eventType.Name,
-            request.IsPublished,
-            request.BannerUrl,
-            request.MaxAttendees,
-            request.Tags,
-            CreatedByUserId = Guid.Parse(userId).ToString(),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            Tickets = request.Tickets.Select(t => new Ticket
-            {
-                Name = t.Name,
-                Description = t.Description,
-                Price = t.Price,
-                Count = t.Count
-            }).ToList()
+            eventEntity.Id,
+            eventEntity.Name,
+            Type = typeById?.Name,
+            CreatedBy = userById?.Email,
+            eventEntity.CreatedAt,
+            eventEntity.UpdatedAt
         };
         return ApiResponse.Created($"/events/{eventEntity.Id}", data);
     }
@@ -212,13 +215,8 @@ public class EventModule : ICarterModule
     [Authorize(Roles = "Admin")]
     private static async Task<IResult> DeleteAllEvents(IEventRepository repo)
     {
-        var events = await repo.GetAllEvents();
-        if (events.Count == 0)
-            throw new KeyNotFoundException("No events found");
-
-        await repo.DeleteAllEvents(events);
-
-        return ApiResponse.Success(message: $"All {events.Count} events have been deleted.");
+        await repo.DeleteAllEvents();
+        return ApiResponse.Success(message: "All events have been deleted.");
     }
 
     private static async Task<IResult> GetAllEventTypes(IEventRepository repo)
