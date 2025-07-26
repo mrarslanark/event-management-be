@@ -5,6 +5,7 @@ namespace EventManagement.Repositories.Interfaces;
 public interface IEventRepository
 {
     Task<List<Event>> GetAllEvents();
+    Task<List<EventType>> GetAllEventTypes();
     Task<Event?> GetEventById(Guid id);
     Task CreateEvent(Event ev);
     Task UpdateEvent(Event ev);

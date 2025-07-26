@@ -15,6 +15,11 @@ public class EventRepository(AppDbContext db) : IEventRepository
             .ToListAsync();
     }
 
+    public async Task<List<EventType>> GetAllEventTypes()
+    {
+        return await db.EventTypes.ToListAsync();
+    }
+
     public async Task<Event?> GetEventById(Guid id)
     {
         return await db.Events

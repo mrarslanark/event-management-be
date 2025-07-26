@@ -15,6 +15,7 @@ public class EventModule : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapGet("/events", GetAllEvents);
+        app.MapGet("/events/types", GetAllEventTypes);
         app.MapGet("/events/{id:guid}", GetEventById);
         app.MapPost("/events", CreateEvent);
         app.MapPatch("/events/{id:guid}", UpdateEvent);
@@ -218,5 +219,14 @@ public class EventModule : ICarterModule
         await repo.DeleteAllEvents(events);
 
         return ApiResponse.Success(message: $"All {events.Count} events have been deleted.");
+    }
+
+    private static async Task<IResult> GetAllEventTypes(IEventRepository repo)
+    {
+        var eventTypes = await repo.GetAllEventTypes();
+        if (eventTypes.Count == 0)
+            throw new KeyNotFoundException("No event types found");
+        
+        return ApiResponse.Success(eventTypes);
     }
 }
