@@ -10,4 +10,6 @@ public interface IEventRepository
     Task UpdateEvent(Event ev);
     Task DeleteEvent(Event id);
     Task DeleteAllEvents(List<Event> events);
+    Task<EventType?> GetEventTypeById(Guid id);
+    Task RemoveTickets(List<Ticket> tickets);
 }

@@ -20,6 +20,7 @@ public class EventRepository(AppDbContext db) : IEventRepository
         return await db.Events
             .Include(e => e.Tickets)
             .Include(e => e.EventType)
+            .Include(e => e.CreatedByUser)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
@@ -45,5 +46,16 @@ public class EventRepository(AppDbContext db) : IEventRepository
     {
         db.Events.RemoveRange(events);
         await db.SaveChangesAsync();
+    }
+
+    public async Task<EventType?> GetEventTypeById(Guid id)
+    {
+        return await db.EventTypes.FindAsync(id);
+    }
+
+    public Task RemoveTickets(List<Ticket> tickets)
+    {
+        db.Tickets.RemoveRange(tickets);
+        return Task.CompletedTask;
     }
 }

@@ -1,15 +1,12 @@
 using System.Security.Claims;
 using Carter;
-using EventManagement.Data;
 using EventManagement.Helpers;
 using EventManagement.Models;
 using EventManagement.Repositories.Interfaces;
 using EventManagement.Requests.Event;
 using EventManagement.Requests.Ticket;
-using EventManagement.Responses;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 
 namespace EventManagement.Modules;
 
@@ -42,9 +39,8 @@ public class EventModule : ICarterModule
     [Authorize(Roles = "Admin,Manager")]
     private static async Task<IResult> CreateEvent(
         CreateEventRequest request,
-        IValidator<CreateEventRequest> eventValidator, 
+        IValidator<CreateEventRequest> eventValidator,
         IValidator<CreateTicketRequest> ticketValidator,
-        AppDbContext db, 
         HttpContext http,
         IEventRepository repo)
     {
@@ -56,7 +52,8 @@ public class EventModule : ICarterModule
         if (userId is null)
             throw new UnauthorizedAccessException("Invalid User");
 
-        var eventType = await db.EventTypes.FindAsync(request.EventTypeId);
+        // var eventType = await db.EventTypes.FindAsync(request.EventTypeId);
+        var eventType = await repo.GetEventTypeById(request.EventTypeId);
         if (eventType is null)
             throw new ArgumentException("Invalid Event Type ID.");
 
@@ -121,9 +118,12 @@ public class EventModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin,Manager")]
-    private static async Task<IResult> UpdateEvent(Guid id, PatchEventRequest request,
-        IValidator<PatchEventRequest> validator, AppDbContext db,
-        HttpContext http, IEventRepository repo)
+    private static async Task<IResult> UpdateEvent(
+        Guid id,
+        PatchEventRequest request,
+        IValidator<PatchEventRequest> validator,
+        HttpContext http,
+        IEventRepository repo)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
@@ -133,17 +133,13 @@ public class EventModule : ICarterModule
         if (userId is null)
             throw new UnauthorizedAccessException("Invalid User");
 
-        var eventEntity = await db.Events
-            .Include(e => e.Tickets)
-            .Include(e => e.EventType)
-            .Include(e => e.CreatedByUser)
-            .FirstOrDefaultAsync(e => e.Id == id);
+        var eventEntity = await repo.GetEventById(id);
         if (eventEntity is null)
             throw new KeyNotFoundException("Event not found");
 
         if (!http.User.IsInRole("Admin") && eventEntity.CreatedByUserId.ToString() != userId)
             throw new UnauthorizedAccessException("Unauthorized Action");
-        
+
         if (request.Name is not null) eventEntity.Name = request.Name;
         if (request.Location is not null) eventEntity.Location = request.Location;
         if (request.StartTime.HasValue) eventEntity.StartTime = request.StartTime.Value;
@@ -157,7 +153,7 @@ public class EventModule : ICarterModule
 
         if (request.Tickets is not null)
         {
-            db.Tickets.RemoveRange(eventEntity.Tickets);
+            await repo.RemoveTickets(eventEntity.Tickets);
             eventEntity.Tickets = request.Tickets.Select(t => new Ticket
             {
                 Name = t.Name,
@@ -199,9 +195,9 @@ public class EventModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin,Manager")]
-    private static async Task<IResult> DeleteEvent(Guid id, AppDbContext db, IEventRepository repo)
+    private static async Task<IResult> DeleteEvent(Guid id, IEventRepository repo)
     {
-        var existingEvent = await db.Events.FindAsync(id);
+        var existingEvent = await repo.GetEventById(id);
         if (existingEvent is null)
             throw new KeyNotFoundException($"Event with ID {id} not found.");
 
@@ -213,9 +209,9 @@ public class EventModule : ICarterModule
     }
 
     [Authorize(Roles = "Admin")]
-    private static async Task<IResult> DeleteAllEvents(AppDbContext db, IEventRepository repo)
+    private static async Task<IResult> DeleteAllEvents(IEventRepository repo)
     {
-        var events = await db.Events.ToListAsync();
+        var events = await repo.GetAllEvents();
         if (events.Count == 0)
             throw new KeyNotFoundException("No events found");
 

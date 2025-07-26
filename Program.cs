@@ -55,6 +55,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddOpenApi();
 // Repositories
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
 var app = builder.Build();
 
