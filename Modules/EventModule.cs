@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using Carter;
+using EventManagement.DTOs.Event;
+using EventManagement.DTOs.Ticket;
 using EventManagement.Helpers;
 using EventManagement.Models;
 using EventManagement.Repositories.Interfaces;
@@ -34,7 +36,33 @@ public class EventModule : ICarterModule
         var eventById = await repo.GetEventById(id);
         if (eventById == null)
             throw new KeyNotFoundException("Event not found");
-        return ApiResponse.Success(eventById);
+
+        var data = new EventDto
+        {
+            Id = eventById.Id,
+            Name = eventById.Name,
+            Description = eventById.Name,
+            Location = eventById.Location,
+            StartTime = eventById.StartTime,
+            EndTime = eventById.EndTime,
+            BannerUrl = eventById.BannerUrl,
+            IsPublished = eventById.IsPublished,
+            MaxAttendees = eventById.MaxAttendees,
+            CreatedBy = eventById.CreatedByUser.Email,
+            CreatedAt = eventById.CreatedAt,
+            UpdatedAt = eventById.UpdatedAt,
+            Type = eventById.EventType.Name,
+            Tags = eventById.Tags,
+            Tickets = eventById.Tickets.Select(t => new TicketDto
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Description = t.Description,
+                Price = t.Price,
+                Count = t.Count,
+            }).ToList()
+        };
+        return ApiResponse.Success(data);
     }
 
     [Authorize(Roles = "Admin,Manager")]

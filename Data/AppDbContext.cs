@@ -1,5 +1,3 @@
-using System.Text.Json;
-using EventManagement.Configurations;
 using EventManagement.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,8 +16,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new EventConfiguration());
-        modelBuilder.ApplyConfiguration(new UserRoleConfiguration());
-        modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }
