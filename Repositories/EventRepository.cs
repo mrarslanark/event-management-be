@@ -1,4 +1,6 @@
 using EventManagement.Data;
+using EventManagement.DTOs.Event;
+using EventManagement.DTOs.Ticket;
 using EventManagement.Models;
 using EventManagement.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -7,11 +9,35 @@ namespace EventManagement.Repositories;
 
 public class EventRepository(AppDbContext db) : IEventRepository
 {
-    public async Task<List<Event>> GetAllEvents()
+    public async Task<List<EventDto>> GetAllEvents()
     {
         return await db.Events
             .Include(e => e.Tickets)
-            .Include(e => e.EventType)
+            .Select(e => new EventDto
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Description = e.Name,
+                Location = e.Location,
+                StartTime = e.StartTime,
+                EndTime = e.EndTime,
+                BannerUrl = e.BannerUrl,
+                IsPublished = e.IsPublished,
+                MaxAttendees = e.MaxAttendees,
+                CreatedBy = e.CreatedByUser.Email,
+                CreatedAt = e.CreatedAt,
+                UpdatedAt = e.UpdatedAt,
+                Type = e.EventType.Name,
+                Tags = e.Tags,
+                Tickets = e.Tickets.Select(t => new TicketDto
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Description = t.Description,
+                    Price = t.Price,
+                    Count = t.Count,
+                }).ToList()
+            })
             .ToListAsync();
     }
 
@@ -47,8 +73,9 @@ public class EventRepository(AppDbContext db) : IEventRepository
         await db.SaveChangesAsync();
     }
 
-    public async Task DeleteAllEvents(List<Event> events)
+    public async Task DeleteAllEvents()
     {
+        var events = await db.Events.ToListAsync();
         db.Events.RemoveRange(events);
         await db.SaveChangesAsync();
     }

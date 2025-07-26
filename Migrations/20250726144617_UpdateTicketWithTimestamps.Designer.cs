@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventManagement.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250726100751_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250726144617_UpdateTicketWithTimestamps")]
+    partial class UpdateTicketWithTimestamps
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,6 +32,7 @@ namespace EventManagement.Migrations
                         .HasColumnType("char(36)");
 
                     b.Property<string>("BannerUrl")
+                        .HasMaxLength(2083)
                         .HasColumnType("varchar(2083)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -42,6 +43,7 @@ namespace EventManagement.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
+                        .HasMaxLength(2000)
                         .HasColumnType("varchar(2000)");
 
                     b.Property<DateTime>("EndTime")
@@ -51,10 +53,13 @@ namespace EventManagement.Migrations
                         .HasColumnType("char(36)");
 
                     b.Property<bool>("IsPublished")
-                        .HasColumnType("tinyint(1)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Location")
                         .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<int?>("MaxAttendees")
@@ -62,6 +67,7 @@ namespace EventManagement.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
                     b.Property<DateTime>("StartTime")
@@ -80,7 +86,7 @@ namespace EventManagement.Migrations
 
                     b.HasIndex("EventTypeId");
 
-                    b.ToTable("Events");
+                    b.ToTable("Events", (string)null);
                 });
 
             modelBuilder.Entity("EventManagement.Models.EventType", b =>
@@ -151,6 +157,9 @@ namespace EventManagement.Migrations
                     b.Property<int>("Count")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("varchar(3000)");
@@ -164,6 +173,9 @@ namespace EventManagement.Migrations
 
                     b.Property<float>("Price")
                         .HasColumnType("float");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
@@ -227,7 +239,7 @@ namespace EventManagement.Migrations
                         .IsRequired();
 
                     b.HasOne("EventManagement.Models.EventType", "EventType")
-                        .WithMany()
+                        .WithMany("Events")
                         .HasForeignKey("EventTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -279,6 +291,11 @@ namespace EventManagement.Migrations
             modelBuilder.Entity("EventManagement.Models.Event", b =>
                 {
                     b.Navigation("Tickets");
+                });
+
+            modelBuilder.Entity("EventManagement.Models.EventType", b =>
+                {
+                    b.Navigation("Events");
                 });
 
             modelBuilder.Entity("EventManagement.Models.Role", b =>

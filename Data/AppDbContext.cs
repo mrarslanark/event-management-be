@@ -1,4 +1,5 @@
 using System.Text.Json;
+using EventManagement.Configurations;
 using EventManagement.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.ApplyConfiguration(new EventConfiguration());
+        
         modelBuilder.Entity<UserRole>()
             .HasKey(ur => new { ur.UserId, ur.RoleId });
 
@@ -30,18 +33,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany(r => r.UserRoles)
             .HasForeignKey(ur => ur.RoleId);
 
-        modelBuilder.Entity<Event>()
-            .HasOne(e => e.CreatedByUser)
-            .WithMany()
-            .HasForeignKey(e => e.CreatedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+        // modelBuilder.Entity<Event>()
+        //     .HasOne(e => e.CreatedByUser)
+        //     .WithMany()
+        //     .HasForeignKey(e => e.CreatedByUserId)
+        //     .OnDelete(DeleteBehavior.Restrict);
         
-        modelBuilder.Entity<Event>()
-            .Property(e => e.Tags)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, new JsonSerializerOptions()),
-                v => JsonSerializer.Deserialize<List<string>>(v, new JsonSerializerOptions()) ?? new List<string>()
-            );
+        // modelBuilder.Entity<Event>()
+        //     .Property(e => e.Tags)
+        //     .HasConversion(
+        //         v => JsonSerializer.Serialize(v, new JsonSerializerOptions()),
+        //         v => JsonSerializer.Deserialize<List<string>>(v, new JsonSerializerOptions()) ?? new List<string>()
+        //  );
         
         modelBuilder.Entity<RefreshToken>()
             .HasIndex(rt => rt.Token)

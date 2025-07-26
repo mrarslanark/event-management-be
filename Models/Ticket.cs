@@ -13,5 +13,7 @@ public class Ticket
     public string Description { get; init; } = string.Empty;
     public float Price { get; init; }
     public int Count { get; init; }
+    public DateTime CreatedAt { get; init; } = DateTime.Now;
+    public DateTime UpdatedAt { get; init; } = DateTime.Now;
     public Guid EventId { get; init; }
 }
